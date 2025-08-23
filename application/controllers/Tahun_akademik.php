@@ -7,7 +7,7 @@ class Tahun_akademik extends CI_Controller {
         $this->load->model('Tahun_akademik_model');
         $this->load->library('session');
         $this->load->helper(array('url', 'form'));
-        $this->load->helper('tanggal_helper');
+        $this->load->helper('Tanggal_helper');
         // Cek apakah sudah login
         if (!$this->session->userdata('logged_in')) {
             // Kalau belum login, redirect ke halaman login
