@@ -1,7 +1,7 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
-require_once APPPATH . '../vendor/autoload.php'; // ⬅️ WAJIB ditambahkan di atas semua
+require_once APPPATH . '../vendor/autoload.php'; 
 
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Reader\Xlsx;
@@ -12,7 +12,7 @@ class Mahasiswa extends CI_Controller {
         $this->load->model('Mahasiswa_model');
         $this->load->library('session');
         $this->load->helper(array('url', 'form'));
-        $this->load->helper('tanggal_helper');
+        $this->load->helper('Tanggal_helper');
         // Cek apakah sudah login
         if (!$this->session->userdata('logged_in')) {
             // Kalau belum login, redirect ke halaman login

@@ -6,7 +6,7 @@ class Pelanggaran extends CI_Controller {
         parent::__construct();
         $this->load->model('Pelanggaran_model');
         $this->load->library('session');
-        $this->load->helper(array('url', 'form'));
+        $this->load->helper(array('url', 'form','Tanggal_helper'));
         // Cek apakah sudah login
         if (!$this->session->userdata('logged_in')) {
             // Kalau belum login, redirect ke halaman login
@@ -33,27 +33,23 @@ class Pelanggaran extends CI_Controller {
         foreach ($list as $datanya) {
             $row = array();
             $row[] = $no++;
-            $row[] = htmlentities($datanya->kode_matakuliah);
-            $row[] = htmlentities($datanya->nama_matakuliah);
-            $row[] = htmlentities($datanya->sks);
-            // // Format jenis kelamin dengan badge warna
-            // $jk = htmlentities($datanya->jenjang);
-            if ($datanya->jenjang == 'M1') {
-                $row[] = '<span class="badge bg-primary">Marhalah Ula</span>';
-            } else {
-                $row[] = '<span class="badge bg-success text-white">Marhalah Tsani</span>';
-            }
-            // $row[] = $jk_badge;
+            $row[] = htmlentities($datanya->nis);
+            $row[] = htmlentities($datanya->nama_mahasiswa);
+            $row[] = htmlentities($datanya->jenjang);
             $row[] = htmlentities($datanya->semester);
+            $row[] = htmlentities($datanya->jenis_pelanggaran);
+            $row[] = htmlentities($datanya->sanksi);
+            $row[] = format_tanggal_indonesia($datanya->tanggal_pelanggaran);
+            
             // Tombol aksi
             $row[] = '
             <div class="btn-group" role="group">
                 <button type="button" class="btn btn-sm btn-outline-primary" 
-                    onclick="edit_matakuliah(\'' . $datanya->id_matakuliah . '\')">
+                    onclick="edit_pelanggaran(\'' . $datanya->id_pelanggaran . '\')">
                     <i class="bx bx-edit"></i> Edit
                 </button>
                 <button type="button" class="btn btn-sm btn-outline-danger" 
-                    onclick="delete_matakuliah(\'' . $datanya->id_matakuliah . '\')">
+                    onclick="delete_pelanggaran(\'' . $datanya->id_pelanggaran . '\')">
                     <i class="bx bx-trash"></i> Hapus
                 </button>
             </div>';
@@ -70,38 +66,16 @@ class Pelanggaran extends CI_Controller {
     {
         $this->_validate();
 
-        // Handle file upload jika ada
-        $silabus = '';
-        if (!empty($_FILES['silabus']['name'])) {
-            $config['upload_path']   = './uploads/silabus/';
-            $config['allowed_types'] = 'pdf|doc|docx';
-            $config['max_size']      = 2048; // dalam KB
-            $config['file_name']     = uniqid('silabus_');
-
-            $this->load->library('upload', $config);
-
-            if ($this->upload->do_upload('silabus')) {
-                $silabus = $this->upload->data('file_name');
-            } else {
-                echo json_encode([
-                    'inputerror'   => ['silabus'],
-                    'error_string' => [$this->upload->display_errors()],
-                    'status'       => FALSE
-                ]);
-                return;
-            }
-        }
-
         $data = array(
-            'kode_matakuliah'           => $this->input->post('kode', TRUE),
-            'nama_matakuliah'=> $this->input->post('nama_matakuliah', TRUE),
-            'sks'            => $this->input->post('sks', TRUE),
-            'jenjang'        => $this->input->post('jenjang', TRUE),
-            'semester'       => $this->input->post('semester', TRUE),
-            // 'silabus'        => $silabus,
+            'nis'           => $this->input->post('nis', TRUE),
+            'jenjang'       => $this->input->post('jenjang', TRUE),
+            'semester'             => $this->input->post('semester', TRUE),
+            'jenis_pelanggaran'    => $this->input->post('jenis_pelanggaran', TRUE),
+            'sanksi'               => $this->input->post('sanksi', TRUE),
+            'tanggal_pelanggaran'  => $this->input->post('tanggal_pelanggaran', TRUE),
         );
 
-        $this->Pelanggaran_model->create('matakuliah', $data);
+        $this->Pelanggaran_model->create('pelanggaran', $data);
         echo json_encode(["status" => TRUE]);
     }
 
@@ -114,17 +88,17 @@ class Pelanggaran extends CI_Controller {
     public function ajax_update()
     {
         $this->_validate();
-
         $data = array(
-            'kode_matakuliah'           => $this->input->post('kode', TRUE),
-            'nama_matakuliah'=> $this->input->post('nama_matakuliah', TRUE),
-            'sks'            => $this->input->post('sks', TRUE),
-            'jenjang'        => $this->input->post('jenjang', TRUE),
-            'semester'       => $this->input->post('semester', TRUE),
-            // tidak update silabus di sini, kecuali Anda ingin menambahkan fitur update file
+            'nis'           => $this->input->post('nis', TRUE),
+            'jenjang'       => $this->input->post('jenjang', TRUE),
+            'semester'             => $this->input->post('semester', TRUE),
+            'jenis_pelanggaran'    => $this->input->post('jenis_pelanggaran', TRUE),
+            'sanksi'               => $this->input->post('sanksi', TRUE),
+            'tanggal_pelanggaran'  => $this->input->post('tanggal_pelanggaran', TRUE),
+            
         );
 
-        $this->Pelanggaran_model->update(['id_matakuliah' => $this->input->post('id_matakuliah')], $data);
+        $this->Pelanggaran_model->update(['id_pelanggaran' => $this->input->post('id_pelanggaran')], $data);
         echo json_encode(["status" => TRUE]);
     }
 
@@ -132,61 +106,94 @@ class Pelanggaran extends CI_Controller {
     {
         $this->load->library('form_validation');
         $this->form_validation->set_error_delimiters('', '');
-    
+
         $rules = [
-            ['kode', 'Kode', 'required|trim'],
-            ['nama_matakuliah', 'Nama Matakuliah', 'required|trim'],
-            ['sks', 'SKS', 'required|numeric'],
+            ['nis', 'NIS', 'required|trim'],
             ['jenjang', 'Jenjang', 'required|in_list[M1,M2]'],
             ['semester', 'Semester', 'required|numeric'],
+            ['jenis_pelanggaran', 'Jenis Pelanggaran', 'required|trim'],
+            ['sanksi', 'Sanksi', 'required|trim'],
+            ['tanggal_pelanggaran', 'Tanggal Pelanggaran', 'required|callback_valid_date'],
         ];
-    
+
         foreach ($rules as $rule) {
             $this->form_validation->set_rules($rule[0], $rule[1], $rule[2], [
-                'required'    => "Kolom {field} wajib diisi.",
-                'numeric'     => "{field} harus berupa angka.",
-                'in_list'     => "Pilih opsi yang valid untuk {field}.",
+                'required' => "Kolom {field} wajib diisi.",
+                'numeric'  => "{field} harus berupa angka.",
+                'in_list'  => "Pilih opsi yang valid untuk {field}.",
             ]);
         }
-    
-        // Jalankan form validation terlebih dahulu
+
         if ($this->form_validation->run() == FALSE) {
             $errors = [
                 'inputerror'   => [],
                 'error_string' => [],
                 'status'       => FALSE
             ];
-    
-            foreach ($_POST as $key => $val) {
-                if (form_error($key)) {
-                    $errors['inputerror'][]   = $key;
-                    $errors['error_string'][] = form_error($key);
+
+            foreach ($rules as $rule) {
+                $field = $rule[0];
+                if (form_error($field)) {
+                    $errors['inputerror'][]   = $field;
+                    $errors['error_string'][] = form_error($field);
                 }
             }
-    
+
             echo json_encode($errors);
             exit;
         }
-    
-        // Baru cek duplikat setelah validasi form berhasil
-        $kode = $this->input->post('kode', TRUE);
-        $id   = $this->input->post('id_matakuliah');
-        $existing = $this->Pelanggaran_model->cek_kode($kode, $id);
-        if ($existing) {
-            echo json_encode([
-                'inputerror'   => ['kode'],
-                'error_string' => ['Kode sudah digunakan. Gunakan kode lain.'],
-                'status'       => FALSE
-            ]);
-            exit;
+    }
+
+
+    public function valid_date($str)
+    {
+        if (DateTime::createFromFormat('Y-m-d', $str) !== FALSE) {
+            return TRUE;
+        } else {
+            $this->form_validation->set_message('valid_date', '{field} tidak valid (format harus YYYY-MM-DD).');
+            return FALSE;
         }
     }
-    
     
     public function delete($id)
     {
         $this->Pelanggaran_model->delete($id);
         echo json_encode(["status" => TRUE]);
+    }
+
+    public function get_mahasiswa()
+    {
+        $nis = $this->input->get('nis');
+        $response = ['success' => false];
+
+        if ($nis) {
+            $data = $this->Pelanggaran_model->get_by_nis($nis);
+            if ($data) {
+                $response = [
+                    'success' => true,
+                    'nama_mahasiswa' => $data->nama_mahasiswa,
+                    'jenjang' => $data->jenjang,
+                    'semester' => $data->semester,
+                    
+                ];
+            }
+        }
+
+        echo json_encode($response);
+    }
+
+    function cetak()
+    {
+        require_once FCPATH . 'vendor/autoload.php';
+
+        // $this->load->model('Mahasiswa_model');
+        // $data['mahasiswa'] = $this->Mahasiswa_model->get_by_id($id);
+
+        $html = $this->load->view('suket_aktif', '$data', TRUE);
+
+        $mpdf = new \Mpdf\Mpdf();
+        $mpdf->WriteHTML($html);
+        $mpdf->Output("suket_aktif.pdf", "I"); // I = inline, D = download
     }
 
 }

@@ -42,12 +42,14 @@
                   <thead>
                     <tr>
                         <th>No</th>
-                        <th>NIS</th>
+                        <th>NIM</th>
                         <th>Nama Mahasiswa</th>
                         <th>Jenjang</th>
+                        <th>Semester</th>
                         <th>Pelanggaran</th>
                         <th>Sanksi</th>
-                        <th>Aksi</th>
+                        <th>Tanggal</th>
+                        <th>#</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -56,12 +58,14 @@
                   <tfoot>
                     <tr>
                         <th>No</th>
-                        <th>NIS</th>
+                        <th>NIM</th>
                         <th>Nama Mahasiswa</th>
                         <th>Jenjang</th>
+                        <th>Semester</th>
                         <th>Pelanggaran</th>
                         <th>Sanksi</th>
-                        <th>Aksi</th>
+                        <th>Tanggal</th>
+                        <th>#</th>
                     </tr>
                   </tfoot>
                 </table>

@@ -135,6 +135,7 @@ function pindah(id) {
         dataType: "JSON",
         success: function(data) {
             $('#edit_id_distribusi_kelas').val(data.id_distribusi_kelas);
+            $('#edit_nis').val(data.nis);
             $('#edit_nama_mahasiswa').val(data.nama_mahasiswa);
             $('#edit_status_keanggotaan').val(data.status_keanggotaan);
             $('#edit_id_kelas').val(data.id_kelas);
@@ -312,7 +313,8 @@ function reload_table()
             <div class="modal-body">
                 <div class="card-body">
                     <form action="#" id="form_edit" method="post">
-                        <input type="hidden" name="edit_id_distribusi_kelas" id="edit_id_distribusi_kelas" />
+                        <input type="text" name="edit_id_distribusi_kelas" id="edit_id_distribusi_kelas" />
+                        <input type="text" name="edit_nis" id="edit_nis" />
 
                         <div class="row mb-3">
                             <div class="col-sm-3">

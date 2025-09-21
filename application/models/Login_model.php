@@ -21,4 +21,11 @@ class Login_model extends CI_Model {
         $query = $this->db->get('mahasiswa');
         return $query->row();  
     }
+
+    public function get_dosen($no_hp) {
+        $this->db->where('nomor_hp', $no_hp);
+        $this->db->limit(1);
+        $query = $this->db->get('dosen');
+        return $query->row();  
+    }
 }

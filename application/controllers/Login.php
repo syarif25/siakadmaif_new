@@ -29,16 +29,16 @@ class Login extends CI_Controller {
         $username = trim($this->input->post('username')); // buang spasi
         $password = $this->input->post('password');
     
-        // Cek di tabel pengguna
+        // Cek di tabel pengguna (Petugas)
         $user = $this->Login_model->get_user($username);
     
         if ($user) {
             if (password_verify($password, $user->password)) {
                 $session_data = array(
                     'username' => $user->username,
-                    'id' => $user->id_pengguna,
-                    'role' => 'petugas',
-                    'logged_in' => TRUE
+                    'id'       => $user->id_pengguna,
+                    'role'     => 'Petugas',
+                    'logged_in'=> TRUE
                 );
                 $this->session->set_userdata($session_data);
                 $this->session->set_flashdata('success', 'Login berhasil!');
@@ -48,15 +48,15 @@ class Login extends CI_Controller {
                 redirect('login');
             }
         } else {
-            // Kalau tidak ketemu di pengguna, coba cari di mahasiswa
+            // Kalau tidak ketemu di pengguna, cek mahasiswa
             $mahasiswa = $this->Login_model->get_mahasiswa($username);
             if ($mahasiswa) {
                 if (password_verify($password, $mahasiswa->password)) {
                     $session_data = array(
-                        'username' => $mahasiswa->username,
-                        'id' => $mahasiswa->id_mahasiswa,
-                        'role' => 'mahasiswa',
-                        'logged_in' => TRUE
+                        'username' => $mahasiswa->nama_mahasiswa,
+                        'id'       => $mahasiswa->nis,
+                        'role'     => 'Mahasiswa',
+                        'logged_in'=> TRUE
                     );
                     $this->session->set_userdata($session_data);
                     $this->session->set_flashdata('success', 'Login mahasiswa berhasil!');
@@ -66,14 +66,30 @@ class Login extends CI_Controller {
                     redirect('login');
                 }
             } else {
-                $this->session->set_flashdata('error', 'Username tidak terdaftar!');
-                redirect('login');
+                // Kalau tidak ketemu di mahasiswa, cek dosen
+                $dosen = $this->Login_model->get_dosen($username);
+                if ($dosen) {
+                    if (password_verify($password, $dosen->password)) {
+                        $session_data = array(
+                            'username' => $dosen->nama_dosen,
+                            'id'       => $dosen->id_dosen, // misalnya pakai NIDN sebagai id
+                            'role'     => 'Dosen',
+                            'logged_in'=> TRUE
+                        );
+                        $this->session->set_userdata($session_data);
+                        $this->session->set_flashdata('success', 'Login dosen berhasil!');
+                        redirect('Dashboard_dosen');
+                    } else {
+                        $this->session->set_flashdata('error', 'Password salah!');
+                        redirect('login');
+                    }
+                } else {
+                    $this->session->set_flashdata('error', 'Username tidak terdaftar!');
+                    redirect('login');
+                }
             }
         }
     }
-    
-    
-    
     
 
     public function logout() {

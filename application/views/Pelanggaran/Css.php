@@ -15,3 +15,10 @@
 <link rel="stylesheet" href="<?php echo base_url() ?>assets/css/dark-theme.css" />
 <link rel="stylesheet" href="<?php echo base_url() ?>assets/css/semi-dark.css" />
 <link rel="stylesheet" href="<?php echo base_url() ?>assets/css/header-colors.css" />
+<style>
+.highlight-success {
+    border: 2px solid #28a745 !important;  /* hijau Bootstrap */
+    box-shadow: 0 0 6px rgba(40, 167, 69, 0.6);
+    transition: all 0.5s ease-in-out;
+}
+</style>

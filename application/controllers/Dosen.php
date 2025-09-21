@@ -45,6 +45,7 @@ class Dosen extends CI_Controller {
             
             $row[] = $jk_badge;
             $row[] = htmlentities($datanya->bidang_keahlian);
+            $row[] = htmlentities($datanya->nomor_hp);
             // Tombol aksi
             $row[] = '
             <div class="btn-group" role="group">
@@ -84,8 +85,7 @@ class Dosen extends CI_Controller {
             'gelar_depan'           => $this->input->post('gelar_depan', TRUE),
             'gelar_belakang'        => $this->input->post('gelar_belakang', TRUE),
             'bidang_keahlian'           => $this->input->post('bidang_keahlian', TRUE),
-            // 'jabatan'            => $this->input->post('jabatan', TRUE),
-            // 'status_kepegawaian' => $this->input->post('status_kepegawaian', TRUE),
+            'password'          => password_hash((string)$this->input->post('password', TRUE), PASSWORD_DEFAULT),
         );
 
         $this->Dosen_model->create('dosen', $data);
@@ -115,9 +115,13 @@ class Dosen extends CI_Controller {
             'gelar_depan'           => $this->input->post('gelar_depan', TRUE),
             'gelar_belakang'        => $this->input->post('gelar_belakang', TRUE),
             'bidang_keahlian'       => $this->input->post('bidang_keahlian', TRUE),
-            // 'jabatan_fungsional'            => $this->input->post('jabatan', TRUE),
-            // 'status_kepegawaian' => $this->input->post('status_kepegawaian', TRUE),
         );
+
+        // Update password hanya jika diisi, dan simpan dalam bentuk hash
+        $password_input = $this->input->post('password', TRUE);
+        if (!empty($password_input)) {
+            $data['password'] = password_hash((string)$password_input, PASSWORD_DEFAULT);
+        }
 
         $this->Dosen_model->update(['id_dosen' => $this->input->post('id_dosen')], $data);
         echo json_encode(["status" => TRUE]);
@@ -128,20 +132,30 @@ class Dosen extends CI_Controller {
         $this->load->library('form_validation');
         $this->form_validation->set_error_delimiters('', '');
 
+        $id_dosen   = $this->input->post('id_dosen'); // id dosen dari form
+        $nomor_hp   = $this->input->post('nomor_hp'); 
+
+        // Cek apakah nomor HP sudah dipakai dosen lain
+        $this->db->where('nomor_hp', $nomor_hp);
+        if (!empty($id_dosen)) {
+            // Saat update, abaikan nomor dosen sendiri
+            $this->db->where('id_dosen !=', $id_dosen);
+        }
+        $exists_hp = $this->db->get('dosen')->num_rows() > 0;
+
         $rules = [
-            ['nik', 'nik', 'required|trim'],
+            ['nik', 'NIK', 'required|trim'],
             ['nama_dosen', 'Nama Lengkap', 'required|trim|min_length[3]'],
             ['tempat_lahir', 'Tempat Lahir', 'required|trim'],
             ['tanggal_lahir', 'Tanggal Lahir', 'required|callback_valid_date'],
-            ['nomor_hp', 'Nomor Handphone', 'required|trim|numeric|min_length[10]|max_length[15]'],
+            // nomor_hp dicek unik secara manual
             ['jenis_kelamin', 'Jenis Kelamin', 'required|in_list[Laki-laki,Perempuan]'],
             ['alamat', 'Alamat', 'required|trim'],
             ['email', 'Email', 'required|trim|valid_email'],
             ['pendidikan_terakhir', 'Jenjang Pendidikan', 'required|trim'],
-            ['gelar', 'Gelar Akademik', 'trim'],
+            ['gelar_depan', 'Gelar Depan', 'trim'],
+            ['gelar_belakang', 'Gelar Belakang', 'trim'],
             ['bidang_keahlian', 'Bidang Keahlian', 'trim'],
-            // ['jabatan', 'Jabatan Fungsional', 'trim'],
-            // ['status_kepegawaian', 'Status Kepegawaian', 'trim'],
         ];
 
         foreach ($rules as $rule) {
@@ -152,6 +166,19 @@ class Dosen extends CI_Controller {
                 'min_length'  => "{field} minimal {param} karakter.",
                 'max_length'  => "{field} maksimal {param} karakter.",
                 'in_list'     => "Pilih opsi yang valid untuk {field}.",
+            ]);
+        }
+
+        // Tambahkan aturan khusus untuk nomor HP unik
+        if ($exists_hp) {
+            $this->form_validation->set_rules('nomor_hp', 'Nomor Handphone', 'callback_dummy_rule');
+            $this->form_validation->set_message('dummy_rule', 'Nomor Handphone sudah terdaftar.');
+        } else {
+            $this->form_validation->set_rules('nomor_hp', 'Nomor Handphone', 'required|trim|numeric|min_length[10]|max_length[15]', [
+                'required'   => "Kolom {field} wajib diisi.",
+                'numeric'    => "{field} harus berupa angka.",
+                'min_length' => "{field} minimal {param} karakter.",
+                'max_length' => "{field} maksimal {param} karakter.",
             ]);
         }
 
@@ -173,6 +200,7 @@ class Dosen extends CI_Controller {
             exit;
         }
     }
+
 
     
     public function delete($id)

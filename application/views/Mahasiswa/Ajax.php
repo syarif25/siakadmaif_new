@@ -146,7 +146,7 @@ function edit_mahasiswa(id) {
             $('[name="email"]').val(data.email);
             $('[name="biaya_pendidikan"]').val(data.biaya_pendidikan);
             $('[name="status"]').val(data.status);
-            $('[name="password"]').val(data.password);
+            $('#password-info').text('Kosongi jika tidak ingin mengubah password');
 
             $('#modal_mahasiswa').modal('show');
             $('.modal-title').text('Edit Data Mahasiswa');
@@ -331,8 +331,9 @@ function reload_table()
                     </div>
 
                     <div class="form-group row mb-3">
-                        <div class="col-sm-3"><h6 class="mb-0">Password</h6></div>
+                        <div class="col-sm-3"><h6 class="mb-0">Password </h6></div>
                         <div class="col-sm-9 text-secondary">
+                        <code id="password-info"></code>
                         <input type="text" name="password" id="password" class="form-control" />
                         <div class="invalid-feedback d-block"></div>
                         </div>

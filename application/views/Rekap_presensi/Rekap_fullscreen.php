@@ -145,18 +145,43 @@
 <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
 <script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
 
+<!-- DataTables Buttons -->
+<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap5.min.css">
+
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.bootstrap5.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js"></script>
+
+
 <script>
   $(document).ready(function () {
-    $('#rekapKehadiran').DataTable({
-      paging: false,
-      searching: false,
-      info: false,
-      scrollX: true,
-      scrollX: true,
+  $('#rekapKehadiran').DataTable({
     paging: false,
-    fixedHeader: true
-    });
+    searching: false,
+    info: false,
+    scrollX: true,
+    fixedHeader: true,
+    dom: 'Bfrtip', // Tambahkan tombol di atas tabel
+    buttons: [
+      {
+        extend: 'excelHtml5',
+        text: 'Download Excel',
+        className: 'btn btn-success btn-sm'
+      },
+      {
+        extend: 'pdfHtml5',
+        text: ' Download PDF',
+        className: 'btn btn-danger btn-sm',
+        orientation: 'landscape',
+        pageSize: 'A4'
+      }
+    ]
   });
+});
 </script>
 
 </body>

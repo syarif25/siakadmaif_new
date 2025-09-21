@@ -13,7 +13,8 @@
 	"require": {
 		"php": ">=5.3.7",
 		"dompdf/dompdf": "*",
-		"phpoffice/phpspreadsheet": "^1.23"
+		"phpoffice/phpspreadsheet": "^1.23",
+		"mpdf/mpdf": "*"
 	},
 	"config": {
 		"platform": {

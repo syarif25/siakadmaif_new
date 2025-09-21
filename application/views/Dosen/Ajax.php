@@ -150,6 +150,7 @@ function edit_dosen(id) {
             $('[name="bidang_keahlian"]').val(data.bidang_keahlian);
             $('[name="jabatan"]').val(data.jabatan_fungsional);
             $('[name="status_kepegawaian"]').val(data.status_kepegawaian);
+            // $('[name="password"]').val(data.password);
 
             $('#modal_dosen').modal('show');
             $('.modal-title').text('Edit Data Dosen');
@@ -344,6 +345,14 @@ function reload_table()
                     <!-- Tombol aksi bisa ditambahkan di sini -->
                   </div>
                 </div>
+                <div class="form-group row mb-3">
+                  <div class="col-sm-3"><h6 class="mb-0">Password </h6></div>
+                      <div class="col-sm-9 text-secondary">
+                      <code>Kosongi jika tidak ingin mengubah password</code>
+                      <input type="text" name="password" id="password" class="form-control" />
+                      <div class="invalid-feedback d-block"></div>
+                      </div>
+                  </div>
               </form>
             </div>
         </div>

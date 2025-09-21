@@ -37,6 +37,9 @@
             <div class="toggle-icon ms-auto"><i class="bx bx-arrow-to-left"></i></div>
           </div>
           <!--navigation-->
+
+          <!-- **** admin *** -->
+           <?php if($this->session->userdata('role') == 'Petugas'){ ?>
           <ul class="metismenu" id="menu">
             <li>
               <a href="<?php echo base_url() ?>" class="">
@@ -144,12 +147,16 @@
                 </li>
               </ul>
             </li>
-            <a href="<?php echo base_url() ?>Pelanggaran">
-                <div class="parent-icon"><i class="bx bx-message-square-edit"></i></div>
+            <li>
+              <a href="<?php echo base_url() ?>Pelanggaran">
+                <div class="parent-icon"><i class="bx bx-user"></i></div>
                 <div class="menu-title">Pelanggaran</div>
               </a>
             </li>
-            <li class="menu-label">- - - - - -</li>
+            
+            <li class="menu-label">
+              <hr>
+            </li>
             <li>
               <a class="has-arrow" href="javascript:;">
                 <div class="parent-icon"><i class="bx bx-detail"></i></div>
@@ -157,7 +164,7 @@
               </a>
               <ul>
                 <li>
-                  <a href="Surat_aktif.html"><i class="bx bx-right-arrow-alt"></i> Aktif Kuliah</a>
+                  <a href="<?php echo base_url() ?>Surataktif"><i class="bx bx-right-arrow-alt"></i> Aktif Kuliah</a>
                 </li>
                 <li>
                   <a href="surat_cuti.html"><i class="bx bx-right-arrow-alt"></i>Pengajuan Cuti</a>
@@ -166,6 +173,60 @@
             </li>
             
           </ul>
+
+          <?php }else if($this->session->userdata('role') == 'Mahasiswa'){ ?>
+          <!-- *** Mahasiswa *** -->
+
+          <ul class="metismenu" id="menu">
+            <li>
+              <a href="<?php echo base_url() ?>Dashboard_mahasiswa" class="">
+                <div class="parent-icon"><i class="bx bx-home-circle"></i></div>
+                <div class="menu-title">Dashboard</div>
+              </a>
+            </li>
+            <!-- <li class="menu-label">Manajemen Data</li> -->
+            <li>
+              <a href="<?php echo base_url() ?>Mahasiswa/detail/<?php echo $this->session->userdata('id')?>">
+                <div class="parent-icon"><i class="bx bx-user"></i></div>
+                <div class="menu-title">Data Diri</div>
+              </a>
+            </li>
+            <li>
+              <a href="<?php echo base_url() ?>Khs_mahasiswa">
+                <div class="parent-icon"><i class="bx bx-grid-alt"></i></div>
+                <div class="menu-title">KHS</div>
+              </a>
+            </li>
+          </ul>
+          <?php }else if($this->session->userdata('role') == 'Dosen'){ ?>
+          <!-- *** Dosen *** -->
+          <ul class="metismenu" id="menu">
+            <li>
+              <a href="<?php echo base_url() ?>Dashboard_dosen" class="">
+                <div class="parent-icon"><i class="bx bx-home-circle"></i></div>
+                <div class="menu-title">Dashboard</div>
+              </a>
+            </li>
+            <li>
+            <a href="Profil.html">
+              <div class="parent-icon"><i class="bx bx-user"></i></div>
+              <div class="menu-title">Data Diri Dosen</div>
+            </a>
+          </li>
+          <li>
+            <a href="<?php echo base_url() ?>Cetak_perdosen">
+              <div class="parent-icon"><i class="bx bx-grid-alt"></i></div>
+              <div class="menu-title">Jadwal Perkuliahan</div>
+            </a>
+          </li>
+          <li>
+            <a href="<?php echo base_url() ?>Penilaian">
+              <div class="parent-icon"><i class="bx bx-message-square-edit"></i></div>
+              <div class="menu-title">Penilaian</div>
+            </a>
+          </li>
+          </ul>
+          <?php } ?>
           <!--end navigation-->
         </div>
         <!--end sidebar wrapper -->
@@ -238,8 +299,8 @@
                 <a class="d-flex align-items-center nav-link dropdown-toggle dropdown-toggle-nocaret" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                   <img src="<?php echo base_url() ?>assets/images/avatars/a.png" class="user-img" alt="user avatar" />
                   <div class="user-info ps-3">
-                    <p class="user-name mb-0">Hidayat</p>
-                    <p class="designattion mb-0">Admin</p>
+                    <p class="user-name mb-0"><?php echo $this->session->userdata('username')?></p>
+                    <p class="designattion mb-0"><?php echo $this->session->userdata('role')?></p>
                   </div>
                 </a>
                 <ul class="dropdown-menu dropdown-menu-end">

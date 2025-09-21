@@ -144,31 +144,48 @@ class Distribusi_kelas extends CI_Controller {
     
     public function ajax_update()
     {
-        $id = $this->input->post('edit_id_distribusi_kelas');
-        $status = $this->input->post('edit_status_keanggotaan');
+        $id       = $this->input->post('edit_id_distribusi_kelas');
+        $nis      = $this->input->post('edit_nis');
+        $status   = $this->input->post('edit_status_keanggotaan');
         $id_kelas = $this->input->post('edit_id_kelas');
-    
-        // Validasi sederhana, bisa dikembangkan
-        if (empty($id) || empty($status)) {
-            echo json_encode(['status' => false, 'inputerror' => [], 'error_string' => ['Data tidak lengkap']]);
+
+        // Validasi sederhana
+        if (empty($id) || empty($status) || empty($nis)) {
+            echo json_encode([
+                'status'      => false,
+                'inputerror'  => [],
+                'error_string'=> ['Data tidak lengkap']
+            ]);
             return;
         }
-    
+
         date_default_timezone_set('Asia/Jakarta');
+
+        // Update tabel distribusi_kelas
         $this->db->where('id_distribusi_kelas', $id);
-        $update = $this->db->update('distribusi_kelas', [
+        $updateDistribusi = $this->db->update('distribusi_kelas', [
             'status_keanggotaan' => $status,
             'id_kelas'           => $id_kelas,
-            'created_at'         => date('Y-m-d H:i:s') // waktu sekarang
+            'created_at'         => date('Y-m-d H:i:s') 
         ]);
 
-    
-        if ($update) {
+        if ($updateDistribusi) {
+            // Update juga tabel mahasiswa berdasarkan NIS
+            $this->db->where('nis', $nis);
+            $this->db->update('mahasiswa', [
+                'status'     => $status
+            ]);
+
             echo json_encode(['status' => true]);
         } else {
-            echo json_encode(['status' => false, 'inputerror' => [], 'error_string' => ['Gagal update data']]);
+            echo json_encode([
+                'status'      => false,
+                'inputerror'  => [],
+                'error_string'=> ['Gagal update data']
+            ]);
         }
     }
+
      
     private function _validate()
     {

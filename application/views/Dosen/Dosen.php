@@ -32,10 +32,10 @@
     <!--end breadcrumb-->
     <!-- <h6 class="mb-0 text-uppercase">Data Mahasiswa</h6> -->
     <button class="btn btn-warning radius-30" onclick="add()"><i class="bx bx-user-plus"></i> Tambah Dosen</button>
-    <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#modal_import"> <i class="bx bx-upload"></i>
+    <!-- <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#modal_import"> <i class="bx bx-upload"></i>
         Import Excel
-      </button>
-    <a class="btn btn-info" href="<?php echo base_url('assets/template_dosen.xlsx') ?>"><i class="bx bx-download"></i>  Download Template</a>
+      </button> -->
+    <!-- <a class="btn btn-info" href="<?php echo base_url('assets/template_dosen.xlsx') ?>"><i class="bx bx-download"></i>  Download Template</a> -->
     <!-- Modal -->
     
     <hr />
@@ -49,6 +49,7 @@
                 <th>Nama Lengkap</th>
                 <th>Jenis Kelamin</th>
                 <th>Bidang Keahlian</th>
+                <th>Nomor HP</th>
                 <th>Aksi</th>
               </tr>
             </thead>
@@ -61,6 +62,7 @@
                 <th>Nama Lengkap</th>
                 <th>Jenis Kelamin</th>
                 <th>Bidang Keahlian</th>
+                <th>Nomor HP</th>
                 <th>Aksi</th>
               </tr>
             </tfoot>
