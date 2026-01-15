@@ -6,7 +6,7 @@ class Rekap_presensi_model extends CI_Model {
     var $table = 'rekap_presensi';
 	var $column_order = array(null,'jenjang','nama_kelas',null);
 	var $column_search = array('jenjang','nama_kelas'); 
-	var $order = array('id_rekap' => 'desc'); // default order 
+	var $order = array('krs.id_kelas' => 'desc'); // default order 
 
 	public function __construct()
 	{
@@ -16,13 +16,13 @@ class Rekap_presensi_model extends CI_Model {
 
 	function _get_datatables_query()
 	{
-		$this->db->select('rekap_presensi.*, krs.id_kelas, kelas.nama_kelas, tahun_akademik.tahun_akademik, kelas.jenjang, tahun_akademik.semester');
+		$this->db->select('krs.id_kelas, kelas.nama_kelas, tahun_akademik.tahun_akademik, kelas.jenjang, tahun_akademik.semester');
 		$this->db->from('rekap_presensi');
         $this->db->join('krs', 'krs.id_krs = rekap_presensi.id_krs');
 		$this->db->join('tahun_akademik', 'krs.id_tahun = tahun_akademik.id_tahun');
         $this->db->join('kelas', 'krs.id_kelas = kelas.id_kelas');
         $this->db->where('tahun_akademik.status', 'Aktif');
-        $this->db->group_by('krs.id_kelas');
+        $this->db->group_by(array('krs.id_kelas', 'kelas.nama_kelas', 'tahun_akademik.tahun_akademik', 'kelas.jenjang', 'tahun_akademik.semester'));
 		$i = 0;
 		if(isset($_POST['order'])) // here order processing
 		{
@@ -64,7 +64,7 @@ class Rekap_presensi_model extends CI_Model {
         $this->db->from('krs');
         $this->db->join('matakuliah', 'matakuliah.id_matakuliah = krs.id_matkul');
         $this->db->where('krs.id_kelas', $id_kelas);
-        $this->db->group_by('krs.id_matkul');
+        $this->db->group_by(array('krs.id_matkul', 'matakuliah.id_matakuliah', 'matakuliah.nama_matakuliah'));
         return $this->db->get()->result();
     }
     
