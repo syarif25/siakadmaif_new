@@ -15,11 +15,24 @@ services:
       - DB_USERNAME=root
       - DB_PASSWORD=root
       - DB_DATABASE=siakad_maif
-      - BASE_URL=http://localhost:8081/
+      - BASE_URL=https://nyobak.my.id/
     depends_on:
       - db
     networks:
       - siakad-network
+
+  caddy:
+    image: caddy:alpine
+    container_name: siakad_caddy
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    command: caddy reverse-proxy --from nyobak.my.id --to http://web:80
+    networks:
+      - siakad-network
+    depends_on:
+      - web
 
   db:
     image: mysql:5.7
