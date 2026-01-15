@@ -4,8 +4,8 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 class Kelas_model extends CI_Model {
 
     var $table = 'kelas';
-	var $column_order = array(null,'nama_kelas','semester','kategori','jenjang',null);
-	var $column_search = array('nama_kelas','semester','kategori','jenjang'); 
+	var $column_order = array(null,'tahun_akademik.tahun_akademik','nama_kelas','semester','kategori','jenjang','status',null);
+	var $column_search = array('tahun_akademik.tahun_akademik','nama_kelas','semester','kategori','jenjang','status'); 
 	var $order = array('id_kelas' => 'desc'); // default order 
 
 	public function __construct()

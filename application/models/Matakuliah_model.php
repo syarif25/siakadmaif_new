@@ -4,8 +4,8 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 class Matakuliah_model extends CI_Model {
 
     var $table = 'matakuliah';
-	var $column_order = array(null,'nama_matakuliah','sks','jenjang','semester',null);
-	var $column_search = array('nama_matakuliah','sks','jenjang','semester'); 
+	var $column_order = array(null,'kode_matakuliah','nama_matakuliah','sks','jenjang','semester',null);
+	var $column_search = array('kode_matakuliah','nama_matakuliah','sks','jenjang','semester'); 
 	var $order = array('id_matakuliah' => 'desc'); // default order 
 
 	public function __construct()

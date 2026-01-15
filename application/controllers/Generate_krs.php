@@ -12,6 +12,18 @@ class Generate_krs extends CI_Controller {
             // Kalau belum login, redirect ke halaman login
             redirect('login');
         }
+        
+        // Cek apakah user adalah Petugas
+        if ($this->session->userdata('role') != 'Petugas') {
+            // Kalau bukan Petugas, redirect ke dashboard sesuai role
+            if ($this->session->userdata('role') == 'Mahasiswa') {
+                redirect('Dashboard_mahasiswa');
+            } elseif ($this->session->userdata('role') == 'Dosen') {
+                redirect('Dashboard_dosen');
+            } else {
+                redirect('login');
+            }
+        }
     }
 
     public function index()
@@ -53,12 +65,16 @@ class Generate_krs extends CI_Controller {
                 ? '<span class="badge bg-warning text-dark">Belum</span>'
                 : '<span class="badge bg-success">Sudah</span>';
 
-            // Tombol aksi (opsional: sesuaikan jika status_krs = 'Sudah')
+            // Tombol aksi
             $row[] = ($datanya->status_krs === 'Belum') ?
-                '<button class="btn btn-sm btn-danger proses-krs" data-id="'.$datanya->id_kelas.'" data-semester="'.$datanya->semester.'">
+                '<button class="btn btn-sm btn-primary proses-krs" data-id="'.$datanya->id_kelas.'" data-semester="'.$datanya->semester.'">
                     <i class="bx bx-cog"></i> Proses KRS
                 </button>' :
-                '<span class="badge bg-success">Sudah diproses</span>';
+                '<div class="btn-group" role="group">
+                    <button class="btn btn-sm btn-danger reset-krs" data-id="'.$datanya->id_kelas.'" data-semester="'.$datanya->semester.'">
+                        <i class="bx bx-undo"></i> Reset KRS
+                    </button>
+                </div>';
 
 
             $data[] = $row;
@@ -84,21 +100,42 @@ class Generate_krs extends CI_Controller {
         }
         $id_tahun = $tahun->id_tahun;
 
+        // Ambil info kelas
+        $kelas = $this->db->get_where('kelas', ['id_kelas' => $id_kelas])->row();
+        
         // Ambil semua mahasiswa dalam kelas
         $mahasiswa = $this->db->get_where('distribusi_kelas', ['id_kelas' => $id_kelas, 'status_keanggotaan' => 'Aktif'])->result();
-        if (!$mahasiswa) {
-            echo json_encode(['status' => false, 'message' => 'Tidak ada mahasiswa dalam kelas ini.']);
+        if (!$mahasiswa || count($mahasiswa) == 0) {
+            echo json_encode(['status' => false, 'message' => 'Tidak ada mahasiswa aktif dalam kelas ini.']);
             return;
         }
 
-        // Ambil distribusi matakuliah untuk kelas ini
-        $matkul = $this->db->get_where('distribusi_mk', ['id_kelas' => $id_kelas])->result();
-        if (!$matkul) {
-            echo json_encode(['status' => false, 'message' => 'Distribusi matakuliah belum dibuat.']);
+        // Ambil distribusi matakuliah untuk kelas ini (DISTINCT matakuliah only)
+        // Fix duplicate KRS entries if multiple schedules exist for the same subject
+        $this->db->select('id_mk');
+        $this->db->distinct();
+        $this->db->where('id_kelas', $id_kelas);
+        $matkul = $this->db->get('distribusi_mk')->result();
+
+        if (!$matkul || count($matkul) == 0) {
+            echo json_encode(['status' => false, 'message' => 'Distribusi matakuliah belum dibuat untuk kelas ini.']);
+            return;
+        }
+
+        // Cek apakah KRS sudah pernah diproses
+        $existing = $this->db->get_where('krs', [
+            'id_kelas' => $id_kelas,
+            'semester' => $semester,
+            'id_tahun' => $id_tahun
+        ])->num_rows();
+        
+        if ($existing > 0) {
+            echo json_encode(['status' => false, 'message' => 'KRS untuk kelas ini sudah pernah diproses. Gunakan fitur Reset KRS jika ingin memproses ulang.']);
             return;
         }
 
         // Simpan ke tabel krs (nis + matkul)
+        $inserted = 0;
         foreach ($mahasiswa as $m) {
             foreach ($matkul as $mk) {
                 $this->db->insert('krs', [
@@ -108,12 +145,92 @@ class Generate_krs extends CI_Controller {
                     'semester' => $semester,
                     'id_tahun' => $id_tahun
                 ]);
+                $inserted++;
             }
         }
+        
+        // Build detailed success message
+        $jumlah_mahasiswa = count($mahasiswa);
+        $jumlah_matakuliah = count($matkul);
+        
+        $message = "<strong>KRS Berhasil Diproses!</strong><br><br>" .
+                   "<strong>Kelas:</strong> {$kelas->nama_kelas}<br>" .
+                   "<strong>Semester:</strong> {$semester}<br>" .
+                   "<strong>Tahun Akademik:</strong> {$tahun->tahun_akademik}<br><br>" .
+                   "<strong> Statistik:</strong><br>" .
+                   "• Jumlah Mahasiswa: {$jumlah_mahasiswa} mahasiswa<br>" .
+                   "• Jumlah Matakuliah: {$jumlah_matakuliah} matakuliah<br>" .
+                   "• Total Record KRS: {$inserted} record";
 
-        echo json_encode(['status' => true, 'message' => 'KRS berhasil diproses untuk kelas ini.']);
+        echo json_encode(['status' => true, 'message' => $message]);
     }
 
+    public function reset_krs()
+    {
+        $id_kelas = $this->input->post('id_kelas');
+        $semester = $this->input->post('semester');
+
+        // Ambil tahun akademik aktif
+        $tahun = $this->db->get_where('tahun_akademik', ['status' => 'Aktif'])->row();
+        if (!$tahun) {
+            echo json_encode(['status' => false, 'message' => 'Tahun akademik aktif tidak ditemukan.']);
+            return;
+        }
+        $id_tahun = $tahun->id_tahun;
+        
+        // Ambil info kelas
+        $kelas = $this->db->get_where('kelas', ['id_kelas' => $id_kelas])->row();
+
+        // Hapus KRS untuk kelas ini
+        $this->db->where('id_kelas', $id_kelas);
+        $this->db->where('semester', $semester);
+        $this->db->where('id_tahun', $id_tahun);
+        $deleted = $this->db->delete('krs');
+        
+        $affected = $this->db->affected_rows();
+
+        if ($deleted) {
+            $message = "<strong>KRS Berhasil Direset!</strong><br><br>" .
+                       "<strong>Kelas:</strong> {$kelas->nama_kelas}<br>" .
+                       "<strong>Semester:</strong> {$semester}<br>" .
+                       "<strong>Tahun Akademik:</strong> {$tahun->tahun_akademik}<br><br>" .
+                       "<strong> Data yang dihapus:</strong> {$affected} record KRS<br><br>" .
+                       "<small class='text-muted'>✓ Anda bisa memproses ulang KRS untuk kelas ini</small>";
+            
+            echo json_encode(['status' => true, 'message' => $message]);
+        } else {
+            echo json_encode(['status' => false, 'message' => 'Gagal mereset KRS.']);
+        }
+    }
+
+    public function reset_all_krs()
+    {
+        // Ambil tahun akademik aktif
+        $tahun = $this->db->get_where('tahun_akademik', ['status' => 'Aktif'])->row();
+        if (!$tahun) {
+            echo json_encode(['status' => false, 'message' => 'Tahun akademik aktif tidak ditemukan.']);
+            return;
+        }
+        $id_tahun = $tahun->id_tahun;
+
+        // Hapus SEMUA KRS untuk tahun akademik aktif
+        $this->db->where('id_tahun', $id_tahun);
+        $deleted = $this->db->delete('krs');
+        
+        $affected = $this->db->affected_rows();
+
+        if ($deleted || $affected >= 0) {
+            $message = "<strong>Semua KRS Berhasil Direset!</strong><br><br>" .
+                       "<strong>Tahun Akademik:</strong> {$tahun->tahun_akademik}<br>" .
+                       "<strong>Semester:</strong> {$tahun->semester}<br><br>" .
+                       "<strong>Data yang dihapus:</strong> {$affected} record KRS<br><br>" .
+                       "<small class='text-muted'>✓ Semua kelas bisa diproses ulang</small>";
+            
+            echo json_encode(['status' => true, 'message' => $message]);
+        } else {
+            echo json_encode(['status' => false, 'message' => 'Gagal mereset KRS.']);
+        }
+    }
 
 
 }

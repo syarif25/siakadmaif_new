@@ -40,15 +40,53 @@ $(document).ready(function(){
             "targets": [ -1 ],
             "orderable": false,
         },
+        {
+            "targets": [ 0 ], // No column
+            "orderable": false,
+            "searchable": false
+        },
     ],
     "paging": true,
     "searching": true,
     "ordering": true,
     "scrollY": false,
+    "orderCellsTop": true, // Use first row for ordering
+    "fixedHeader": true,
 
     // Tambahkan dom dan buttons di sini:
     dom: 'Bfrtip',
-    buttons: ['copy', 'excel', 'pdf', 'print']
+    buttons: ['copy', 'excel', 'pdf', 'print'],
+    
+    // Initialize column filters
+    initComplete: function () {
+        var api = this.api();
+        
+        // Setup filters di baris kedua thead
+        api.columns().eq(0).each(function (colIdx) {
+            // Ambil cell di baris kedua untuk kolom ini
+            var cell = $('.filters th').eq($(api.column(colIdx).header()).index());
+            
+            // Bind input text & number
+            $('input', cell).off('keyup change').on('keyup change', function (e) {
+                e.stopPropagation();
+                var curValue = this.value;
+                api.column(colIdx).search(curValue).draw();
+            });
+            
+            // Bind select dropdown
+            $('select', cell).off('change').on('change', function (e) {
+                e.stopPropagation();
+                var val = $(this).val();
+                
+                // Custom search untuk jenjang column (menggunakan data-search attribute)
+                if (val) {
+                    api.column(colIdx).search(val, true, false).draw();
+                } else {
+                    api.column(colIdx).search('').draw();
+                }
+            });
+        });
+    }
 });
 
 });

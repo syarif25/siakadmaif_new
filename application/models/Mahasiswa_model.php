@@ -4,8 +4,8 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 class Mahasiswa_model extends CI_Model {
 
     var $table = 'mahasiswa';
-	var $column_order = array('nis','nim','nama','jk','status',null);
-	var $column_search = array('nis','nim','nama','jk','status'); 
+	var $column_order = array('nis','nim','nama_mahasiswa','jk','status',null);
+	var $column_search = array('nis','nim','nama_mahasiswa','jk','status'); 
 	var $order = array('nis' => 'desc'); // default order 
 
 	public function __construct()
@@ -79,6 +79,14 @@ class Mahasiswa_model extends CI_Model {
 	{
 		$this->db->insert_batch('mahasiswa', $data);
 	}
+
+	public function exists($nis, $nim) {
+		return $this->db->where('nis', $nis)
+						->or_where('nim', $nim)
+						->get('mahasiswa')
+						->num_rows() > 0;
+	}
+	
 
 
 }

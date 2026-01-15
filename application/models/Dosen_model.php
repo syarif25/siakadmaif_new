@@ -4,8 +4,8 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 class Dosen_model extends CI_Model {
 
     var $table = 'dosen';
-	var $column_order = array(null,'nama_dosen','jk','bidang_keahlian',null);
-	var $column_search = array('nama_dosen','jk','bidang_keahlian'); 
+	var $column_order = array(null,'nik','nama_dosen','jk','bidang_keahlian','nomor_hp',null);
+	var $column_search = array('nik','nama_dosen','jk','bidang_keahlian','nomor_hp'); 
 	var $order = array('id_dosen' => 'desc'); // default order 
 
 	public function __construct()
@@ -73,6 +73,17 @@ class Dosen_model extends CI_Model {
 			$this->db->where('id_dosen !=', $exclude_id);
 		}
 		return $this->db->get('dosen')->num_rows() > 0;
+	}
+
+	public function import_batch($data)
+	{
+		$this->db->insert_batch('dosen', $data);
+	}
+
+	public function exists($nis, $nim) {
+		return $this->db->where('nik', $nis)
+						->get('dosen')
+						->num_rows() > 0;
 	}
 
 }

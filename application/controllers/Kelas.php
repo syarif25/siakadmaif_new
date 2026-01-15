@@ -12,6 +12,18 @@ class Kelas extends CI_Controller {
             // Kalau belum login, redirect ke halaman login
             redirect('login');
         }
+        
+        // Cek apakah user adalah Petugas
+        if ($this->session->userdata('role') != 'Petugas') {
+            // Kalau bukan Petugas, redirect ke dashboard sesuai role
+            if ($this->session->userdata('role') == 'Mahasiswa') {
+                redirect('Dashboard_mahasiswa');
+            } elseif ($this->session->userdata('role') == 'Dosen') {
+                redirect('Dashboard_dosen');
+            } else {
+                redirect('login');
+            }
+        }
     }
 
     public function index()

@@ -75,10 +75,10 @@ $query_builder = TRUE;
 
 $db['default'] = array(
 	'dsn'	=> '',
-	'hostname' => 'localhost',
-	'username' => 'root',
-	'password' => 'root',
-	'database' => 'siakad_maif',
+	'hostname' => getenv('DB_HOSTNAME') ?: 'localhost',
+	'username' => getenv('DB_USERNAME') ?: 'root',
+	'password' => getenv('DB_PASSWORD') ?: 'root',
+	'database' => getenv('DB_DATABASE') ?: 'siakad_maif',
 	'dbdriver' => 'mysqli',
 	'dbprefix' => '',
 	'pconnect' => FALSE,

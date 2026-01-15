@@ -2,9 +2,9 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 class Generate_krs_model extends CI_Model {
 
-    var $column_order = array(null,'jenjang','nama_kelas','semester','tahun_pelajaran','jumlah_mahasiswa','status_krs',null);
-    var $column_search = array('jenjang','nama_kelas','semester','tahun_pelajaran','jumlah_mahasiswa','status_krs'); 
-    var $order = array('k.id_kelas' => 'desc'); // atau kolom lain yang valid
+    var $column_order = array(null,'k.jenjang','k.nama_kelas','k.semester','t.tahun_akademik',null,null,null,null,null);
+    var $column_search = array('k.jenjang','k.nama_kelas','k.semester','t.tahun_akademik'); 
+    var $order = array('k.id_kelas' => 'desc');
 
     public function __construct()
     {
@@ -47,6 +47,10 @@ class Generate_krs_model extends CI_Model {
         $this->db->from('distribusi_kelas dk');
         $this->db->join('tahun_akademik t', 'dk.id_tahun = t.id_tahun');
         $this->db->join('kelas k', 'k.id_kelas = dk.id_kelas', 'left');
+        
+        // CRITICAL: Filter by active academic year ONLY
+        $this->db->where('t.id_tahun', $tahun_pelajaran);
+        
         $this->db->group_by('k.id_kelas');
 
         // Urutan kolom jika di DataTables

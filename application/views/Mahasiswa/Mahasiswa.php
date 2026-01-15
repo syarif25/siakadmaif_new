@@ -50,9 +50,31 @@
                       <th>NIS</th>
                       <th>NIM</th>
                       <th>Nama Lengkap</th>
-                      <th>JK</th>
+                      <th>Jenis Kelamin</th>
                       <th>Status</th>
                       <th>Aksi</th>
+                    </tr>
+                    <tr class="filters">
+                      <th></th> <!-- No column -->
+                      <th><input type="text" class="form-control form-control-sm" placeholder="Cari NIS" /></th>
+                      <th><input type="text" class="form-control form-control-sm" placeholder="Cari NIM" /></th>
+                      <th><input type="text" class="form-control form-control-sm" placeholder="Cari Nama" /></th>
+                      <th>
+                        <select class="form-select form-select-sm">
+                          <option value="">Semua JK</option>
+                          <option value="Laki-laki">Laki-laki</option>
+                          <option value="Perempuan">Perempuan</option>
+                        </select>
+                      </th>
+                      <th>
+                        <select class="form-select form-select-sm">
+                          <option value="">Semua Status</option>
+                          <option value="Aktif">Aktif</option>
+                          <option value="Cuti">Cuti</option>
+                          <option value="Non Aktif">Non Aktif</option>
+                        </select>
+                      </th>
+                      <th></th> <!-- Aksi column -->
                     </tr>
                   </thead>
                   <tbody>

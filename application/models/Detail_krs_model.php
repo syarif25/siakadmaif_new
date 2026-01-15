@@ -29,7 +29,7 @@ class Detail_krs_model extends CI_Model {
         $this->db->join('matakuliah mk', 'k.id_matkul = mk.id_matakuliah');
         $this->db->join('kelas kel', 'k.id_kelas = kel.id_kelas');
         $this->db->join('tahun_akademik t', 'k.id_tahun = t.id_tahun');
-        $this->db->group_by('m.nis');
+        $this->db->group_by(array('m.nis', 'm.nama_mahasiswa', 'k.semester', 'kel.jenjang', 'kel.nama_kelas', 't.tahun_akademik', 'k.id_kelas'));
 
         // Urutan kolom jika di DataTables
         if (isset($_POST['order'])) {
@@ -61,11 +61,10 @@ class Detail_krs_model extends CI_Model {
     {
         $this->db->from('krs k');
         $this->db->join('mahasiswa m', 'k.nis = m.nis');
-        $this->db->join('matakuliah mk', 'k.id_matkul = mk.id_matkul');
+        $this->db->join('matakuliah mk', 'k.id_matkul = mk.id_matakuliah');
         $this->db->join('kelas kel', 'k.id_kelas = kel.id_kelas');
         $this->db->join('tahun_akademik t', 'k.id_tahun = t.id_tahun');
-        $this->db->where('k.status', 'Aktif');
+        // $this->db->where('k.status', 'Aktif'); // Column status does not exist in krs
         return $this->db->count_all_results();
     }
 }
-

@@ -31,5 +31,17 @@
     z-index: 2000 !important;
 }
 
+/* Fix Select2 dropdown z-index in modal */
+.select2-container {
+    z-index: 9999 !important;
+}
+
+.select2-dropdown {
+    z-index: 9999 !important;
+}
+
+.select2-dropdown-above-modal {
+    z-index: 10000 !important;
+}
 
 </style>

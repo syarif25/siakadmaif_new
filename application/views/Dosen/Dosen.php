@@ -32,10 +32,10 @@
     <!--end breadcrumb-->
     <!-- <h6 class="mb-0 text-uppercase">Data Mahasiswa</h6> -->
     <button class="btn btn-warning radius-30" onclick="add()"><i class="bx bx-user-plus"></i> Tambah Dosen</button>
-    <!-- <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#modal_import"> <i class="bx bx-upload"></i>
+    <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#modal_import"> <i class="bx bx-upload"></i>
         Import Excel
-      </button> -->
-    <!-- <a class="btn btn-info" href="<?php echo base_url('assets/template_dosen.xlsx') ?>"><i class="bx bx-download"></i>  Download Template</a> -->
+      </button>
+    <a class="btn btn-info" href="<?php echo base_url('assets/template_dosen.xlsx') ?>"><i class="bx bx-download"></i>  Download Template</a>
     <!-- Modal -->
     
     <hr />
@@ -46,11 +46,27 @@
             <thead>
               <tr>
                 <th>No</th>
+                <th>NIK</th>
                 <th>Nama Lengkap</th>
                 <th>Jenis Kelamin</th>
                 <th>Bidang Keahlian</th>
                 <th>Nomor HP</th>
                 <th>Aksi</th>
+              </tr>
+              <tr class="filters">
+                <th></th> <!-- No column -->
+                <th><input type="text" class="form-control form-control-sm" placeholder="Cari NIK" /></th>
+                <th><input type="text" class="form-control form-control-sm" placeholder="Cari Nama" /></th>
+                <th>
+                  <select class="form-select form-select-sm">
+                    <option value="">Semua JK</option>
+                    <option value="Laki-laki">Laki-laki</option>
+                    <option value="Perempuan">Perempuan</option>
+                  </select>
+                </th>
+                <th><input type="text" class="form-control form-control-sm" placeholder="Cari Bidang Keahlian" /></th>
+                <th><input type="text" class="form-control form-control-sm" placeholder="Cari Nomor HP" /></th>
+                <th></th> <!-- Aksi column -->
               </tr>
             </thead>
             <tbody>
@@ -59,6 +75,7 @@
             <tfoot>
               <tr>
                 <th>No</th>
+                <th>NIK</th>
                 <th>Nama Lengkap</th>
                 <th>Jenis Kelamin</th>
                 <th>Bidang Keahlian</th>

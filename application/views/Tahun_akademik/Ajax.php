@@ -33,6 +33,15 @@ $(document).ready(function(){
         "ordering": true,
         scrollY:        false,
         // scrollX:        false,
+        
+        // Highlight row untuk tahun akademik yang aktif
+        "createdRow": function(row, data, dataIndex) {
+            // data[3] adalah kolom status (index 3)
+            // Cek apakah badge berisi "Aktif" tapi BUKAN "Tidak Aktif"
+            if (data[3].includes('bg-success')) {
+                $(row).css('background-color', '#d4edda'); // Light green background
+            }
+        }
     });
 });
 
@@ -129,12 +138,12 @@ function edit_tahun(id)
 function delete_tahun(id)
 {
     Swal.fire({
-        title: 'Are you sure?',
-        text: 'You will not be able to recover this record!',
+        title: 'Yakin mau dihapus?',
+        text: 'Data yang terhapus tidak bisa dikembalikan',
         icon: 'warning',
         showCancelButton: true,
-        confirmButtonText: 'Yes, delete it!',
-        cancelButtonText: 'No, cancel!',
+        confirmButtonText: 'Yes, Hapus !',
+        cancelButtonText: 'No, Batal!',
         reverseButtons: true
     }).then((result) => {
         if (result.isConfirmed) {

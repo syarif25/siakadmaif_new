@@ -22,3 +22,11 @@ user_guide_src/cilexer/pycilexer.egg-info/*
 #-------------------------
 /nbproject/
 .idea/*
+
+# Dependencies
+vendor/
+node_modules/
+
+# Environment
+.env
+.DS_Store

@@ -40,16 +40,53 @@ $(document).ready(function(){
             "targets": [ -1 ],
             "orderable": false,
         },
+        {
+            "targets": [ 0 ], // No column
+            "orderable": false,
+            "searchable": false
+        },
     ],
     "paging": true,
     "searching": true,
     "ordering": true,
     "scrollY": false,
+    "orderCellsTop": true, //Gunakan row pertama untuk ordering
+    "fixedHeader": true,
 
     // Tambahkan dom dan buttons di sini:
     dom: 'Bfrtip',
-    buttons: ['copy', 'excel', 'pdf', 'print']
+    buttons: ['copy', 'excel', 'pdf', 'print'],
+    
+    // Initialize column filters
+    initComplete: function () {
+        var api = this.api();
+        
+        // Setup filters di baris kedua thead
+        api.columns().eq(0).each(function (colIdx) {
+            // Ambil cell di baris kedua untuk kolom ini
+            var cell = $('.filters th').eq($(api.column(colIdx).header()).index());
+            
+            // Bind input text
+            $('input', cell).off('keyup change').on('keyup change', function (e) {
+                e.stopPropagation();
+                var curValue = this.value;
+                api.column(colIdx).search(curValue).draw();
+            });
+            
+            // Bind select dropdown
+            $('select', cell).off('change').on('change', function (e) {
+                e.stopPropagation();
+                var val = $(this).val();
+                api.column(colIdx).search(val ? '^' + val + '$' : '', true, false).draw();
+            });
+        });
+    }
 });
+
+$('#form-import-dosen').off('submit').on('submit', function (e) {
+    e.preventDefault();
+    ajaxImportDosen(this);
+  });
 
 });
 
@@ -193,11 +230,68 @@ function delete_dosen(id) {
     });
 }
 
+function ajaxImportDosen(formEl) {
+  const btn = $('#btnImport');
+  btn.prop('disabled', true).text('Mengunggah...');
+
+  const fd = new FormData(formEl);
+
+  // Jika CSRF aktif di CI3, ikutkan token (opsional, kalau kamu pakai CSRF)
+  <?php if (isset($this) && property_exists($this, 'security') && method_exists($this->security, 'get_csrf_token_name')): ?>
+  fd.append('<?= $this->security->get_csrf_token_name(); ?>', '<?= $this->security->get_csrf_hash(); ?>');
+  <?php endif; ?>
+
+  $.ajax({
+    url: "<?= site_url('dosen/import_excel_ajax') ?>", // endpoint khusus AJAX
+    type: "POST",
+    data: fd,
+    processData: false,
+    contentType: false,
+    dataType: "json"
+  })
+  .done(function (resp) {
+    if (resp && resp.ok) {
+      // Optional: tutup modal
+      $('#modal_import').modal('hide');
+      // Arahkan ke preview
+      window.location = resp.redirect;
+    } else {
+      Swal.fire('Gagal', (resp && resp.error) ? resp.error : 'Terjadi kesalahan saat import.', 'error');
+    }
+  })
+  .fail(function (xhr) {
+    Swal.fire('Error', 'Tidak dapat menghubungi server.', 'error');
+  })
+  .always(function () {
+    btn.prop('disabled', false).text('Import');
+  });
+}
+
 
 function reload_table()
 {
     table.ajax.reload(null,false); //reload datatable ajax 
 }
+
+
+<?php if ($this->session->flashdata('success')): ?>
+  Swal.fire({
+    icon: 'success',
+    title: 'Berhasil!',
+    text: '<?= $this->session->flashdata('success'); ?>',
+    showConfirmButton: false,
+    timer: 4000
+  });
+<?php elseif ($this->session->flashdata('error')): ?>
+  Swal.fire({
+    icon: 'error',
+    title: 'Gagal!',
+    text: '<?= $this->session->flashdata('error'); ?>',
+    showConfirmButton: false,
+    timer: 4000
+  });
+<?php endif; ?>
+
 </script>
 
 <div class="modal fade" id="modal_dosen" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
@@ -366,7 +460,7 @@ function reload_table()
 
 <div class="modal fade" id="modal_import">
   <div class="modal-dialog">
-    <form action="<?= site_url('dosen/import_excel') ?>" method="post" enctype="multipart/form-data">
+    <form id="form-import-dosen" method="post" enctype="multipart/form-data">
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="">Import Dosen dari Excel</h5>
@@ -376,7 +470,7 @@ function reload_table()
           <input type="file" name="file_excel" class="form-control" required accept=".xls,.xlsx">
         </div>
         <div class="modal-footer">
-          <button type="submit" class="btn btn-primary">Import</button>
+          <button type="submit" class="btn btn-primary" id="btnImport">Import</button>
         </div>
       </div>
     </form>

@@ -12,12 +12,33 @@ class Distribusi_kelas extends CI_Controller {
             // Kalau belum login, redirect ke halaman login
             redirect('login');
         }
+        
+        // Cek apakah user adalah Petugas
+        if ($this->session->userdata('role') != 'Petugas') {
+            // Kalau bukan Petugas, redirect ke dashboard sesuai role
+            if ($this->session->userdata('role') == 'Mahasiswa') {
+                redirect('Dashboard_mahasiswa');
+            } elseif ($this->session->userdata('role') == 'Dosen') {
+                redirect('Dashboard_dosen');
+            } else {
+                redirect('login');
+            }
+        }
     }
 
     public function index()
 	{
         $isi['tahun_akademik']  = $this->db->get('tahun_akademik')->result();
-        $isi['kelas']           = $this->db->get('kelas')->result();
+        
+        // Load kelas dengan info lengkap untuk dropdown
+        $this->db->select('kelas.*, tahun_akademik.tahun_akademik');
+        $this->db->from('kelas');
+        $this->db->join('tahun_akademik', 'kelas.id_tahun = tahun_akademik.id_tahun');
+        $this->db->order_by('kelas.jenjang', 'ASC');
+        $this->db->order_by('kelas.kategori', 'ASC');
+        $this->db->order_by('kelas.nama_kelas', 'ASC');
+        $isi['kelas'] = $this->db->get()->result();
+        
         $isi['mahasiswa']       = $this->db->get('mahasiswa')->result();
         $isi['content']         = 'Distribusi_kelas/Distribusi_kelas';
         $isi['ajax']            = 'Distribusi_kelas/Ajax';
@@ -126,15 +147,23 @@ class Distribusi_kelas extends CI_Controller {
     
         // Beri respon JSON sesuai hasil
         if ($inserted > 0) {
+            // Ambil nama kelas untuk pesan
+            $kelas_info = $this->db->get_where('kelas', ['id_kelas' => $id_kelas])->row();
+            $nama_kelas = $kelas_info ? $kelas_info->nama_kelas : 'kelas';
+            
             $response = ['status' => TRUE];
             if (count($duplikat) > 0) {
-                $response['message'] = 'Sebagian data berhasil ditambahkan. Beberapa mahasiswa sudah pernah terdistribusi.';
-                $response['duplikat'] = $duplikat;
+                $nis_list = implode(', ', $duplikat);
+                $response['message'] = "Berhasil: {$inserted} mahasiswa ditambahkan ke {$nama_kelas}. " . 
+                                      count($duplikat) . " sudah terdistribusi (NIS: {$nis_list})";
+            } else {
+                $response['message'] = "Berhasil: {$inserted} mahasiswa ditambahkan ke {$nama_kelas}";
             }
         } else {
+            $nis_list = implode(', ', $duplikat);
             $response = [
                 'status' => FALSE,
-                'message' => 'Semua mahasiswa sudah terdistribusi ke kelas dan semester tersebut.',
+                'message' => 'Semua mahasiswa sudah terdistribusi ke kelas dan semester tersebut. (NIS: ' . $nis_list . ')',
                 'duplikat' => $duplikat
             ];
         }
@@ -148,6 +177,8 @@ class Distribusi_kelas extends CI_Controller {
         $nis      = $this->input->post('edit_nis');
         $status   = $this->input->post('edit_status_keanggotaan');
         $id_kelas = $this->input->post('edit_id_kelas');
+        $old_id_kelas = $this->input->post('old_id_kelas'); // kelas sebelumnya
+        $old_status = $this->input->post('old_status'); // status sebelumnya
 
         // Validasi sederhana
         if (empty($id) || empty($status) || empty($nis)) {
@@ -159,6 +190,30 @@ class Distribusi_kelas extends CI_Controller {
             return;
         }
 
+        // Validasi gender jika pindah kelas
+        if ($id_kelas != $old_id_kelas) {
+            // Ambil data mahasiswa
+            $mahasiswa = $this->db->get_where('mahasiswa', ['nis' => $nis])->row();
+            // Ambil data kelas tujuan
+            $kelas_tujuan = $this->db->get_where('kelas', ['id_kelas' => $id_kelas])->row();
+            
+            if ($mahasiswa && $kelas_tujuan) {
+                // Validasi gender
+                $jk_mahasiswa = $mahasiswa->jk;
+                $kategori_kelas = $kelas_tujuan->kategori;
+                
+                if (($kategori_kelas == 'Putra' && $jk_mahasiswa != 'Laki-laki') ||
+                    ($kategori_kelas == 'Putri' && $jk_mahasiswa != 'Perempuan')) {
+                    echo json_encode([
+                        'status' => false,
+                        'inputerror' => ['edit_id_kelas'],
+                        'error_string' => ['Mahasiswa ' . $jk_mahasiswa . ' tidak bisa dipindah ke kelas ' . $kategori_kelas]
+                    ]);
+                    return;
+                }
+            }
+        }
+
         date_default_timezone_set('Asia/Jakarta');
 
         // Update tabel distribusi_kelas
@@ -166,17 +221,43 @@ class Distribusi_kelas extends CI_Controller {
         $updateDistribusi = $this->db->update('distribusi_kelas', [
             'status_keanggotaan' => $status,
             'id_kelas'           => $id_kelas,
-            'created_at'         => date('Y-m-d H:i:s') 
+            'created_at'         => date('Y-m-d H:i:s') // Fix: updated_at bukan created_at
         ]);
 
         if ($updateDistribusi) {
             // Update juga tabel mahasiswa berdasarkan NIS
             $this->db->where('nis', $nis);
             $this->db->update('mahasiswa', [
-                'status'     => $status
+                'status' => $status
             ]);
 
-            echo json_encode(['status' => true]);
+            // Ambil nama mahasiswa dan kelas untuk pesan
+            $mhs = $this->db->get_where('mahasiswa', ['nis' => $nis])->row();
+            $nama_mhs = $mhs ? $mhs->nama_mahasiswa : 'Mahasiswa';
+            
+            // Build detailed message
+            $message = '';
+            $changes = [];
+            
+            if ($status != $old_status) {
+                $changes[] = "Status: <strong>{$old_status}</strong> → <strong>{$status}</strong>";
+            }
+            
+            if ($id_kelas != $old_id_kelas) {
+                $kelas_lama = $this->db->get_where('kelas', ['id_kelas' => $old_id_kelas])->row();
+                $kelas_baru = $this->db->get_where('kelas', ['id_kelas' => $id_kelas])->row();
+                $nama_kelas_lama = $kelas_lama ? $kelas_lama->nama_kelas : 'Unknown';
+                $nama_kelas_baru = $kelas_baru ? $kelas_baru->nama_kelas : 'Unknown';
+                $changes[] = "Kelas: <strong>{$nama_kelas_lama}</strong> → <strong>{$nama_kelas_baru}</strong>";
+            }
+            
+            if (count($changes) > 0) {
+                $message = "<strong>{$nama_mhs} ({$nis})</strong><br>" . implode('<br>', $changes) . "<br><small class='text-muted'>✓ Data master mahasiswa juga telah diupdate</small>";
+            } else {
+                $message = "Data {$nama_mhs} ({$nis}) berhasil diupdate";
+            }
+
+            echo json_encode(['status' => true, 'message' => $message]);
         } else {
             echo json_encode([
                 'status'      => false,
@@ -225,9 +306,10 @@ class Distribusi_kelas extends CI_Controller {
 
     public function ajax_edit($id)
     {
-        $this->db->select('dk.*, m.nama_mahasiswa');
+        $this->db->select('dk.*, m.nama_mahasiswa, m.jk, k.nama_kelas as kelas_sekarang, k.jenjang, k.kategori');
         $this->db->from('distribusi_kelas dk');
         $this->db->join('mahasiswa m', 'm.nis = dk.nis');
+        $this->db->join('kelas k', 'k.id_kelas = dk.id_kelas');
         $this->db->where('dk.id_distribusi_kelas', $id);
         $query = $this->db->get();
     
@@ -267,24 +349,36 @@ class Distribusi_kelas extends CI_Controller {
     
         $semester = $kelas->semester;
         $id_tahun = $kelas->id_tahun;
+        $jenjang = $kelas->jenjang;
+        $kategori = $kelas->kategori;
     
         // Buat subquery untuk NIS yang sudah terdaftar di kelas manapun pada tahun yang sama
         $subquery = "SELECT dk.nis FROM distribusi_kelas dk 
                      JOIN kelas k ON dk.id_kelas = k.id_kelas";
     
         // Ambil mahasiswa yang TIDAK ada di subquery tersebut
-        $this->db->select('m.nis, m.nama_mahasiswa');
+        // Filter by jenjang yang sesuai dan JK yang sesuai dengan kategori kelas
+        $this->db->select('m.nis, m.nama_mahasiswa, m.jk');
         $this->db->from('mahasiswa m');
         $this->db->where("m.nis NOT IN ($subquery)", NULL, FALSE);
         $this->db->where('m.status', 'Aktif');
+        
+        // Filter by JK sesuai kategori kelas (Putra=Laki-laki, Putri=Perempuan)
+        if ($kategori == 'Putra') {
+            $this->db->where('m.jk', 'Laki-laki');
+        } elseif ($kategori == 'Putri') {
+            $this->db->where('m.jk', 'Perempuan');
+        }
+        
+        $this->db->order_by('m.nama_mahasiswa', 'ASC');
     
         $query = $this->db->get();
         $mahasiswa = $query->result();
     
         if ($mahasiswa) {
-            echo json_encode(['status' => true, 'data' => $mahasiswa]);
+            echo json_encode(['status' => true, 'data' => $mahasiswa, 'jenjang' => $jenjang, 'kategori' => $kategori]);
         } else {
-            echo json_encode(['status' => false, 'data' => []]);
+            echo json_encode(['status' => false, 'data' => [], 'jenjang' => $jenjang, 'kategori' => $kategori]);
         }
     }
     

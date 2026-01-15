@@ -4,8 +4,8 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 class Distribusi_kelas_model extends CI_Model {
 
     var $table = 'kelas';
-	var $column_order = array(null,'nama_kelas','semester','kategori','jenjang',null);
-	var $column_search = array('nama_kelas','semester','kategori','jenjang'); 
+	var $column_order = array(null,'nama_kelas','tahun_akademik.tahun_akademik','mahasiswa.nis','mahasiswa.nama_mahasiswa','kelas.semester','distribusi_kelas.status_keanggotaan',null);
+	var $column_search = array('nama_kelas','tahun_akademik.tahun_akademik','mahasiswa.nis','mahasiswa.nama_mahasiswa','kelas.semester','distribusi_kelas.status_keanggotaan'); 
 	var $order = array('id_distribusi_kelas' => 'desc'); // default order 
 
 	public function __construct()

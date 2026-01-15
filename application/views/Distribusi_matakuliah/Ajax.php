@@ -48,15 +48,40 @@ $(document).ready(function(){
             "targets": [ -1 ],
             "orderable": false,
         },
+        {
+            "targets": [ 0 ], // No column
+            "orderable": false,
+            "searchable": false
+        },
     ],
     "paging": true,
     "searching": true,
     "ordering": true,
     "scrollY": false,
+    "orderCellsTop": true, // Use first row for ordering
+    "fixedHeader": true,
 
     // Tambahkan dom dan buttons di sini:
     dom: 'Bfrtip',
-    buttons: ['copy', 'excel', 'pdf', 'print']
+    buttons: ['copy', 'excel', 'pdf', 'print'],
+    
+    // Initialize column filters
+    initComplete: function () {
+        var api = this.api();
+        
+        // Setup filters di baris kedua thead
+        api.columns().eq(0).each(function (colIdx) {
+            // Ambil cell di baris kedua untuk kolom ini
+            var cell = $('.filters th').eq($(api.column(colIdx).header()).index());
+            
+            // Bind input text & number
+            $('input', cell).off('keyup change').on('keyup change', function (e) {
+                e.stopPropagation();
+                var curValue = this.value;
+                api.column(colIdx).search(curValue).draw();
+            });
+        });
+    }
 });
 
 });
@@ -107,12 +132,16 @@ function save() {
                 $('#modal_distribusi').modal('hide');
                 
                 reload_table();
+                
+                // Use detailed message from server if available
+                var successMessage = response.message || pesan;
+                
                 Swal.fire({
                     icon: 'success',
-                    title: 'Sukses',
-                    text: pesan,
-                    showConfirmButton: false,
-                    timer: 1500
+                    title: 'Sukses!',
+                    html: successMessage,
+                    showConfirmButton: true,
+                    confirmButtonText: 'OK'
                 });
             } else {
                 for (let i = 0; i < response.inputerror.length; i++) {
@@ -232,8 +261,12 @@ function reload_table()
                     <div class="form-group col-sm-9 text-secondary">
                         <select name="id_mk" id="id_mk" class="form-control select2">
                             <option value="">.:: Pilih Matakuliah ::.</option>
-                            <?php foreach($matakuliah as $mk): ?>
-                                <option value="<?= $mk->id_matakuliah ?>"><?= $mk->nama_matakuliah ?></option>
+                            <?php foreach($matakuliah as $mk): 
+                                $jenjang_text = $mk->jenjang == 'M1' ? 'Marhalah Ula' : 'Marhalah Tsaniya';
+                            ?>
+                                <option value="<?= $mk->id_matakuliah ?>">
+                                    <?= $mk->nama_matakuliah ?> (<?= $mk->sks ?> SKS) | <?= $jenjang_text ?> | Sem <?= $mk->semester ?>
+                                </option>
                             <?php endforeach; ?>
                         </select>
                         <span class="invalid-feedback"></span>
@@ -247,10 +280,16 @@ function reload_table()
                         <select name="id_dosen" id="id_dosen" class="form-control select2">
                             <option value="">.:: Pilih Dosen ::.</option>
                             <?php foreach($dosen as $d): ?>
-                                <option value="<?= $d->id_dosen ?>"><?= $d->nama_dosen ?></option>
+                                <option value="<?= $d->id_dosen ?>">
+                                    <?= ($d->gelar_depan ? $d->gelar_depan . ' ' : '') . $d->nama_dosen . ($d->gelar_belakang ? ', ' . $d->gelar_belakang : '') ?>
+                                </option>
                             <?php endforeach; ?>
                         </select>
                         <span class="invalid-feedback"></span>
+                        <div id="jadwal_dosen_preview" class="mt-2" style="display:none;">
+                            <small class="text-success"><strong>👨‍🏫 Jadwal Dosen:</strong></small>
+                            <div id="jadwal_dosen_list" class="alert alert-success p-2 mt-1"></div>
+                        </div>
                     </div>
                 </div>
 

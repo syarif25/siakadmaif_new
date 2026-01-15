@@ -66,5 +66,25 @@ class Tahun_akademik_model extends CI_Model {
 		return $this->db->affected_rows();
 	}
 
+	/**
+	 * Check if tahun akademik + semester already exists
+	 * @param string $tahun_akademik
+	 * @param string $semester
+	 * @param int $id_tahun (optional, for update)
+	 * @return bool
+	 */
+	public function check_duplicate($tahun_akademik, $semester, $id_tahun = null)
+	{
+		$this->db->where('tahun_akademik', $tahun_akademik);
+		$this->db->where('semester', $semester);
+		
+		if ($id_tahun) {
+			$this->db->where('id_tahun !=', $id_tahun);
+		}
+		
+		$query = $this->db->get('tahun_akademik');
+		return $query->num_rows() > 0;
+	}
 
 }
+

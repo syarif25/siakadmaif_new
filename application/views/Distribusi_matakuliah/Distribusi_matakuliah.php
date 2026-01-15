@@ -63,6 +63,16 @@
                     <th>Waktu</th>
                     <th>Aksi</th>
                 </tr>
+                <tr class="filters">
+                    <th></th> <!-- No column -->
+                    <th><input type="text" class="form-control form-control-sm" placeholder="Cari Jenjang" /></th>
+                    <th><input type="text" class="form-control form-control-sm" placeholder="Cari Kelas" /></th>
+                    <th><input type="text" class="form-control form-control-sm" placeholder="Cari Matakuliah" /></th>
+                    <th><input type="number" class="form-control form-control-sm" placeholder="SKS" /></th>
+                    <th><input type="text" class="form-control form-control-sm" placeholder="Cari Dosen" /></th>
+                    <th><input type="text" class="form-control form-control-sm" placeholder="Cari Waktu" /></th>
+                    <th></th> <!-- Aksi column -->
+                </tr>
             </thead>
             <tbody>
               

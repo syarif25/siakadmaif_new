@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: siakad_web
+    ports:
+      - "8081:80"
+    volumes:
+      - .:/var/www/html
+    environment:
+      - DB_HOSTNAME=db
+      - DB_USERNAME=root
+      - DB_PASSWORD=root
+      - DB_DATABASE=siakad_maif
+      - BASE_URL=http://localhost:8081/
+    depends_on:
+      - db
+    networks:
+      - siakad-network
+
+  db:
+    image: mysql:5.7
+    container_name: siakad_db
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: siakad_maif
+    ports:
+      - "3307:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+      # Mount the SQL dump to be imported on first startup
+      - ./database.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - siakad-network
+    # Fix for some platforms (strictly optional but helps with compatibility)
+    platform: linux/amd64
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: siakad_pma
+    restart: always
+    ports:
+      - '8082:80'
+    environment:
+      - PMA_HOST=db
+      - PMA_PORT=3306
+    depends_on:
+      - db
+    networks:
+      - siakad-network
+
+networks:
+  siakad-network:
+    driver: bridge
+
+volumes:
+  db_data:

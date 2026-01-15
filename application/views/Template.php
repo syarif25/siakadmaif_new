@@ -42,7 +42,7 @@
            <?php if($this->session->userdata('role') == 'Petugas'){ ?>
           <ul class="metismenu" id="menu">
             <li>
-              <a href="<?php echo base_url() ?>" class="">
+              <a href="<?php echo base_url() ?>Dashboard_admin" class="">
                 <div class="parent-icon"><i class="bx bx-home-circle"></i></div>
                 <div class="menu-title">Dashboard</div>
               </a>
@@ -153,7 +153,6 @@
                 <div class="menu-title">Pelanggaran</div>
               </a>
             </li>
-            
             <li class="menu-label">
               <hr>
             </li>

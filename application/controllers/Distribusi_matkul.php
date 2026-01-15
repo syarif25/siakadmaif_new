@@ -14,14 +14,46 @@ class Distribusi_matkul extends CI_Controller {
             // Kalau belum login, redirect ke halaman login
             redirect('login');
         }
+        
+        // Cek apakah user adalah Petugas
+        if ($this->session->userdata('role') != 'Petugas') {
+            // Kalau bukan Petugas, redirect ke dashboard sesuai role
+            if ($this->session->userdata('role') == 'Mahasiswa') {
+                redirect('Dashboard_mahasiswa');
+            } elseif ($this->session->userdata('role') == 'Dosen') {
+                redirect('Dashboard_dosen');
+            } else {
+                redirect('login');
+            }
+        }
     }
     
     public function index()
     {
         $isi['tahun_akademik'] = $this->db->get('tahun_akademik')->result();
-        $isi['ruangan']        = $this->db->get('kelas')->result();
-        $isi['matakuliah']     = $this->db->get('matakuliah')->result();
-        $isi['dosen']          = $this->db->get('dosen')->result();
+        
+        // Load kelas with detailed info
+        $this->db->select('kelas.*, tahun_akademik.tahun_akademik, 
+                          (SELECT COUNT(*) FROM distribusi_kelas dk WHERE dk.id_kelas = kelas.id_kelas AND dk.status_keanggotaan = "Aktif") as total_mahasiswa');
+        $this->db->from('kelas');
+        $this->db->join('tahun_akademik', 'kelas.id_tahun = tahun_akademik.id_tahun');
+        $this->db->order_by('kelas.jenjang', 'ASC');
+        $this->db->order_by('kelas.nama_kelas', 'ASC');
+        $isi['ruangan'] = $this->db->get()->result();
+        
+        // Load matakuliah with detailed info  
+        $this->db->select('*');
+        $this->db->from('matakuliah');
+        $this->db->order_by('jenjang', 'ASC');
+        $this->db->order_by('semester', 'ASC');
+        $this->db->order_by('nama_matakuliah', 'ASC');
+        $isi['matakuliah'] = $this->db->get()->result();
+        
+        // Load dosen with bidang keahlian
+        $this->db->select('*');
+        $this->db->from('dosen');
+        $this->db->order_by('nama_dosen', 'ASC');
+        $isi['dosen'] = $this->db->get()->result();
     
         $isi['content'] = 'Distribusi_matakuliah/Distribusi_matakuliah';
         $isi['ajax']    = 'Distribusi_matakuliah/Ajax';
@@ -46,7 +78,13 @@ class Distribusi_matkul extends CI_Controller {
             $row[] = htmlentities($datanya->nama_kelas);
             $row[] = htmlentities($datanya->nama_matakuliah);
             $row[] = htmlentities($datanya->sks);
-            $row[] = htmlentities($datanya->nama_dosen);
+            
+            // Format nama dosen dengan gelar
+            $nama_dosen_lengkap = ($datanya->gelar_depan ? $datanya->gelar_depan . ' ' : '') . 
+                                  $datanya->nama_dosen . 
+                                  ($datanya->gelar_belakang ? ', ' . $datanya->gelar_belakang : '');
+            $row[] = htmlentities($nama_dosen_lengkap);
+            
             $row[] = htmlentities($datanya->hari) . ' ' . htmlentities($datanya->jam_mulai) . ' - ' . htmlentities($datanya->jam_selesai);
 
             // Tombol aksi
@@ -88,18 +126,42 @@ class Distribusi_matkul extends CI_Controller {
         $this->_validate();
         $tahun_akademik_aktif = $this->db->get_where('tahun_akademik', ['status' => 'aktif'])->row();
 
+        $id_kelas = $this->input->post('id_kelas', TRUE);
+        $id_mk = $this->input->post('id_mk', TRUE);
+        $id_dosen = $this->input->post('id_dosen', TRUE);
+        $hari = $this->input->post('hari', TRUE);
+        $jam_mulai = $this->input->post('jam_mulai', TRUE);
+        $jam_selesai = $this->input->post('jam_selesai', TRUE);
+
         $data = [
             'id_tahun'    => $tahun_akademik_aktif->id_tahun,
-            'id_kelas'    => $this->input->post('id_kelas', TRUE),
-            'id_mk' => $this->input->post('id_mk', TRUE),
-            'id_dosen'    => $this->input->post('id_dosen', TRUE),
-            'hari'        => $this->input->post('hari', TRUE),
-            'jam_mulai'   => $this->input->post('jam_mulai', TRUE),
-            'jam_selesai' => $this->input->post('jam_selesai', TRUE),
+            'id_kelas'    => $id_kelas,
+            'id_mk'       => $id_mk,
+            'id_dosen'    => $id_dosen,
+            'hari'        => $hari,
+            'jam_mulai'   => $jam_mulai,
+            'jam_selesai' => $jam_selesai,
         ];
 
-        $this->Distribusi_matkul_model->create('distribusi_mk',$data); // Pastikan modelnya sesuai
-        echo json_encode(["status" => TRUE]);
+        $this->Distribusi_matkul_model->create('distribusi_mk',$data);
+        
+        // Build detailed message
+        $kelas = $this->db->get_where('kelas', ['id_kelas' => $id_kelas])->row();
+        $matakuliah = $this->db->get_where('matakuliah', ['id_matakuliah' => $id_mk])->row();
+        $dosen = $this->db->get_where('dosen', ['id_dosen' => $id_dosen])->row();
+        
+        // Format nama dosen dengan gelar
+        $nama_dosen_lengkap = ($dosen->gelar_depan ? $dosen->gelar_depan . ' ' : '') . 
+                              $dosen->nama_dosen . 
+                              ($dosen->gelar_belakang ? ', ' . $dosen->gelar_belakang : '');
+        
+$message = "<strong>Distribusi berhasil ditambahkan!</strong><br><br>" .
+                   "<strong>Kelas:</strong> {$kelas->nama_kelas}<br>" .
+                   "<strong>Matakuliah:</strong> {$matakuliah->nama_matakuliah} ({$matakuliah->sks} SKS)<br>" .
+                   "<strong>Dosen:</strong> {$nama_dosen_lengkap}<br>" .
+                   "<strong>Waktu:</strong> " . ucfirst($hari) . ", " . substr($jam_mulai, 0, 5) . " - " . substr($jam_selesai, 0, 5);
+        
+        echo json_encode(["status" => TRUE, "message" => $message]);
     }
 
 
@@ -114,19 +176,42 @@ class Distribusi_matkul extends CI_Controller {
         $this->_validate();
 
         $id = $this->input->post('id_distribusi_matakuliah');
+        
+        $id_kelas = $this->input->post('id_kelas', TRUE);
+        $id_mk = $this->input->post('id_mk', TRUE);
+        $id_dosen = $this->input->post('id_dosen', TRUE);
+        $hari = $this->input->post('hari', TRUE);
+        $jam_mulai = $this->input->post('jam_mulai', TRUE);
+        $jam_selesai = $this->input->post('jam_selesai', TRUE);
 
         $data = [
-            'id_kelas'    => $this->input->post('id_kelas', TRUE),
-            'id_mk'       => $this->input->post('id_mk', TRUE), // diperbaiki
-            'id_dosen'    => $this->input->post('id_dosen', TRUE),
-            'hari'        => $this->input->post('hari', TRUE),
-            'jam_mulai'   => $this->input->post('jam_mulai', TRUE),
-            'jam_selesai' => $this->input->post('jam_selesai', TRUE),
+            'id_kelas'    => $id_kelas,
+            'id_mk'       => $id_mk,
+            'id_dosen'    => $id_dosen,
+            'hari'        => $hari,
+            'jam_mulai'   => $jam_mulai,
+            'jam_selesai' => $jam_selesai,
         ];
 
         $this->Distribusi_matkul_model->update(['id_distribusi' => $id], $data);
+        
+        // Build detailed message
+        $kelas = $this->db->get_where('kelas', ['id_kelas' => $id_kelas])->row();
+        $matakuliah = $this->db->get_where('matakuliah', ['id_matakuliah' => $id_mk])->row();
+        $dosen = $this->db->get_where('dosen', ['id_dosen' => $id_dosen])->row();
+        
+        // Format nama dosen dengan gelar
+        $nama_dosen_lengkap = ($dosen->gelar_depan ? $dosen->gelar_depan . ' ' : '') . 
+                              $dosen->nama_dosen . 
+                              ($dosen->gelar_belakang ? ', ' . $dosen->gelar_belakang : '');
+        
+        $message = "<strong>Distribusi berhasil diupdate!</strong><br><br>" .
+                   "<strong>Kelas:</strong> {$kelas->nama_kelas}<br>" .
+                   "<strong>Matakuliah:</strong> {$matakuliah->nama_matakuliah} ({$matakuliah->sks} SKS)<br>" .
+                   "<strong>Dosen:</strong> {$nama_dosen_lengkap}<br>" .
+                   "<strong>Waktu:</strong> "  . ucfirst($hari) . ", " . substr($jam_mulai, 0, 5) . " - " . substr($jam_selesai, 0, 5);
 
-        echo json_encode(["status" => TRUE]);
+        echo json_encode(["status" => TRUE, "message" => $message]);
     }
 
 
@@ -253,7 +338,54 @@ class Distribusi_matkul extends CI_Controller {
         exit;
     }
     
-
+    
+    // Get room schedule for live preview
+    public function get_jadwal_ruangan()
+    {
+        $id_kelas = $this->input->post('id_kelas');
+        $hari = $this->input->post('hari');
+        $id_distribusi = $this->input->post('id_distribusi'); // untuk exclude saat edit
+        
+        $this->db->select('distribusi_mk.*, matakuliah.nama_matakuliah, dosen.nama_dosen');
+        $this->db->from('distribusi_mk');
+        $this->db->join('matakuliah', 'distribusi_mk.id_mk = matakuliah.id_matakuliah');
+        $this->db->join('dosen', 'distribusi_mk.id_dosen = dosen.id_dosen');
+        $this->db->where('distribusi_mk.id_kelas', $id_kelas);
+        $this->db->where('distribusi_mk.hari', $hari);
+        
+        if ($id_distribusi) {
+            $this->db->where('distribusi_mk.id_distribusi !=', $id_distribusi);
+        }
+        
+        $this->db->order_by('distribusi_mk.jam_mulai', 'ASC');
+        $jadwal = $this->db->get()->result();
+        
+        echo json_encode(['status' => true, 'jadwal' => $jadwal]);
+    }
+    
+    // Get teacher schedule for live preview
+    public function get_jadwal_dosen()
+    {
+        $id_dosen = $this->input->post('id_dosen');
+        $hari = $this->input->post('hari');
+        $id_distribusi = $this->input->post('id_distribusi'); // untuk exclude saat edit
+        
+        $this->db->select('distribusi_mk.*, matakuliah.nama_matakuliah, kelas.nama_kelas');
+        $this->db->from('distribusi_mk');
+        $this->db->join('matakuliah', 'distribusi_mk.id_mk = matakuliah.id_matakuliah');
+        $this->db->join('kelas', 'distribusi_mk.id_kelas = kelas.id_kelas');
+        $this->db->where('distribusi_mk.id_dosen', $id_dosen);
+        $this->db->where('distribusi_mk.hari', $hari);
+        
+        if ($id_distribusi) {
+            $this->db->where('distribusi_mk.id_distribusi !=', $id_distribusi);
+        }
+        
+        $this->db->order_by('distribusi_mk.jam_mulai', 'ASC');
+        $jadwal = $this->db->get()->result();
+        
+        echo json_encode(['status' => true, 'jadwal' => $jadwal]);
+    }
 
    
 }

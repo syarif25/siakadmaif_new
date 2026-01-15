@@ -13,6 +13,18 @@ class Tahun_akademik extends CI_Controller {
             // Kalau belum login, redirect ke halaman login
             redirect('login');
         }
+        
+        // Cek apakah user adalah Petugas
+        if ($this->session->userdata('role') != 'Petugas') {
+            // Kalau bukan Petugas, redirect ke dashboard sesuai role
+            if ($this->session->userdata('role') == 'Mahasiswa') {
+                redirect('Dashboard_mahasiswa');
+            } elseif ($this->session->userdata('role') == 'Dosen') {
+                redirect('Dashboard_dosen');
+            } else {
+                redirect('login');
+            }
+        }
     }
 
     public function index()
@@ -54,10 +66,7 @@ class Tahun_akademik extends CI_Controller {
                             <i class="bx bx-check-circle mr-1"></i> Aktifkan
                         </a>';
 
-            }                         
-			//add html for action
-			$row[] = '<a type="button" class="btn btn-outline-danger btn-sm" href="#" 
-			title="Edit Tahun" onclick="edit_tahun('."'".$datanya->id_tahun."'".')"><i class="bx bx-edit mr-1" ></i> Edit</a>';
+            }
 		$data[] = $row;
 		}
 			$output = array("data" => $data);
@@ -107,10 +116,24 @@ class Tahun_akademik extends CI_Controller {
 	
 	public function aktifkan($id)
 	{
-		$this->db->update('tahun_akademik',array('status' => 'Tidak Aktif'));
-		$this->db->where('id_tahun',$id);
-		$this->db->update('tahun_akademik',array('status' => 'Aktif'));
-		echo json_encode(array("status" => TRUE));
+		// Gunakan transaction untuk memastikan data konsisten
+		$this->db->trans_start();
+		
+		// Set semua tahun akademik jadi Tidak Aktif
+		$this->db->update('tahun_akademik', array('status' => 'Tidak Aktif'));
+		
+		// Aktifkan tahun akademik yang dipilih
+		$this->db->where('id_tahun', $id);
+		$this->db->update('tahun_akademik', array('status' => 'Aktif'));
+		
+		$this->db->trans_complete();
+		
+		// Check apakah transaction berhasil
+		if ($this->db->trans_status() === FALSE) {
+			echo json_encode(array("status" => FALSE, "message" => "Gagal mengaktifkan tahun akademik"));
+		} else {
+			echo json_encode(array("status" => TRUE));
+		}
 	}
 
     private function _validate()
@@ -174,6 +197,35 @@ class Tahun_akademik extends CI_Controller {
                 }
             }
 
+            echo json_encode($errors);
+            exit;
+        }
+        
+        // Validasi tambahan: tanggal selesai harus lebih besar dari tanggal mulai
+        $tanggal_mulai = strtotime($this->input->post('tanggal_mulai'));
+        $tanggal_selesai = strtotime($this->input->post('tanggal_selesai'));
+        
+        if ($tanggal_selesai <= $tanggal_mulai) {
+            $errors = array(
+                'inputerror'   => array('tanggal_selesai'),
+                'error_string' => array('Tanggal Selesai harus lebih besar dari Tanggal Mulai.'),
+                'status'       => FALSE
+            );
+            echo json_encode($errors);
+            exit;
+        }
+        
+        // Validasi duplikasi: cek apakah tahun akademik + semester sudah ada
+        $tahun_akademik = $this->input->post('tahun_akademik');
+        $semester = $this->input->post('semester');
+        $id_tahun = $this->input->post('id_tahun'); // Null untuk add, ada value untuk update
+        
+        if ($this->Tahun_akademik_model->check_duplicate($tahun_akademik, $semester, $id_tahun)) {
+            $errors = array(
+                'inputerror'   => array('tahun_akademik'),
+                'error_string' => array('Tahun Akademik ' . $tahun_akademik . ' semester ' . $semester . ' sudah terdaftar.'),
+                'status'       => FALSE
+            );
             echo json_encode($errors);
             exit;
         }

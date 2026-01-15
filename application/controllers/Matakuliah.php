@@ -12,6 +12,18 @@ class Matakuliah extends CI_Controller {
             // Kalau belum login, redirect ke halaman login
             redirect('login');
         }
+        
+        // Cek apakah user adalah Petugas
+        if ($this->session->userdata('role') != 'Petugas') {
+            // Kalau bukan Petugas, redirect ke dashboard sesuai role
+            if ($this->session->userdata('role') == 'Mahasiswa') {
+                redirect('Dashboard_mahasiswa');
+            } elseif ($this->session->userdata('role') == 'Dosen') {
+                redirect('Dashboard_dosen');
+            } else {
+                redirect('login');
+            }
+        }
     }
 
     public function index()
@@ -36,14 +48,15 @@ class Matakuliah extends CI_Controller {
             $row[] = htmlentities($datanya->kode_matakuliah);
             $row[] = htmlentities($datanya->nama_matakuliah);
             $row[] = htmlentities($datanya->sks);
-            // // Format jenis kelamin dengan badge warna
-            // $jk = htmlentities($datanya->jenjang);
-            if ($datanya->jenjang == 'M1') {
-                $row[] = '<span class="badge bg-primary">Marhalah Ula</span>';
+            
+            // Format jenjang dengan badge + data-search untuk filter
+            $jenjang_value = $datanya->jenjang;
+            if ($jenjang_value == 'M1') {
+                $row[] = '<span class="badge bg-primary" data-search="M1">Marhalah Ula</span>';
             } else {
-                $row[] = '<span class="badge bg-success text-white">Marhalah Tsani</span>';
+                $row[] = '<span class="badge bg-success text-white" data-search="M2">Marhalah Tsani</span>';
             }
-            // $row[] = $jk_badge;
+            
             $row[] = htmlentities($datanya->semester);
             // Tombol aksi
             $row[] = '

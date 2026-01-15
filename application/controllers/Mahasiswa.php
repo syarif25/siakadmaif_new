@@ -18,6 +18,18 @@ class Mahasiswa extends CI_Controller {
             // Kalau belum login, redirect ke halaman login
             redirect('login');
         }
+        
+        // Cek apakah user adalah Petugas
+        if ($this->session->userdata('role') != 'Petugas') {
+            // Kalau bukan Petugas, redirect ke dashboard sesuai role
+            if ($this->session->userdata('role') == 'Mahasiswa') {
+                redirect('Dashboard_mahasiswa');
+            } elseif ($this->session->userdata('role') == 'Dosen') {
+                redirect('Dashboard_dosen');
+            } else {
+                redirect('login');
+            }
+        }
     }
 
     public function index()
@@ -127,6 +139,9 @@ class Mahasiswa extends CI_Controller {
                     ? \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($tanggal_excel)->format('Y-m-d')
                     : date('Y-m-d', strtotime($tanggal_excel));
             
+                // Normalisasi status - selalu Aktif
+                $status_normalized = 'Aktif';
+                
                 $data_import[] = [
                     'nis'               => $row['A'],
                     'nim'               => $row['B'],
@@ -138,7 +153,9 @@ class Mahasiswa extends CI_Controller {
                     'alamat'            => $row['H'],
                     'email'             => $row['I'],
                     'biaya_pendidikan'  => $row['J'],
-                    'status'            => $row['K'],
+                    'status'            => $status_normalized,
+                    'password'          => password_hash((string)$row['B'], PASSWORD_DEFAULT), // Password = NIM
+                    'tgl_input'         => date('Y-m-d H:i:s'),
                 ];
             }
 
@@ -158,23 +175,56 @@ class Mahasiswa extends CI_Controller {
     public function simpan_import()
     {
         $data = $this->session->userdata('preview_data_mahasiswa');
-        if (!empty($data)) {
-            $this->Mahasiswa_model->import_batch($data);
-            $this->session->unset_userdata('preview_data_mahasiswa');
-            $this->session->set_flashdata('success', 'Data mahasiswa berhasil diimport.');
-        } else {
-            $this->session->set_flashdata('error', 'Tidak ada data untuk diimport.');
+        
+        if (empty($data)) {
+            $this->session->set_flashdata('error', 'Tidak ada data untuk diimport atau session sudah habis.');
+            redirect('mahasiswa');
         }
+
+        $valid_data = [];
+        $duplicate_data = [];
+
+        foreach ($data as $row) {
+            // Cek apakah NIS atau NIM sudah ada di database
+            $exists = $this->db->where('nis', $row['nis'])
+                            ->or_where('nim', $row['nim'])
+                            ->get('mahasiswa')
+                            ->num_rows() > 0;
+
+            if ($exists) {
+                $duplicate_data[] = $row; // simpan untuk laporan
+            } else {
+                $valid_data[] = $row;
+            }
+        }
+
+        // Jika ada data valid, simpan ke DB
+        if (!empty($valid_data)) {
+            $this->Mahasiswa_model->import_batch($valid_data);
+            $msg = count($valid_data) . ' data berhasil diimport.';
+            if (!empty($duplicate_data)) {
+                $msg .= ' ' . count($duplicate_data) . ' data dilewati karena duplikat.';
+            }
+            $this->session->set_flashdata('success', $msg);
+        } else {
+            $this->session->set_flashdata('error', 'Semua data duplikat, tidak ada yang disimpan.');
+        }
+
+        // Hapus session preview
+        $this->session->unset_userdata('preview_data_mahasiswa');
         redirect('mahasiswa');
     }
+
 
     public function ajax_add()
     {
         $this->_validate();
 
+        $nim = $this->input->post('nim', TRUE);
+        
         $data = array(
             'nis'               => $this->input->post('nis', TRUE),
-            'nim'               => $this->input->post('nim', TRUE),
+            'nim'               => $nim,
             'nama_mahasiswa'    => $this->input->post('nama_lengkap', TRUE),
             'tempat_lahir'      => $this->input->post('tempat_lahir', TRUE),
             'tanggal_lahir'     => $this->input->post('tanggal_lahir', TRUE),
@@ -184,7 +234,8 @@ class Mahasiswa extends CI_Controller {
             'email'             => $this->input->post('email', TRUE),
             'biaya_pendidikan'  => $this->input->post('biaya_pendidikan', TRUE),
             'status'            => $this->input->post('status', TRUE),
-            'password'          => password_hash((string)$this->input->post('password', TRUE), PASSWORD_DEFAULT),
+            'password'          => password_hash((string)$nim, PASSWORD_DEFAULT), // Password = NIM
+            'tgl_input'         => date('Y-m-d H:i:s'),
         );
 
         $this->Mahasiswa_model->create('mahasiswa', $data);
@@ -201,8 +252,10 @@ class Mahasiswa extends CI_Controller {
     {
         $this->_validate();
 
+        $nim = $this->input->post('nim', TRUE);
+        
         $data = array(
-            'nim'               => $this->input->post('nim', TRUE),
+            'nim'               => $nim,
             'nama_mahasiswa'    => $this->input->post('nama_lengkap', TRUE),
             'tempat_lahir'      => $this->input->post('tempat_lahir', TRUE),
             'tanggal_lahir'     => $this->input->post('tanggal_lahir', TRUE),
@@ -212,14 +265,9 @@ class Mahasiswa extends CI_Controller {
             'email'             => $this->input->post('email', TRUE),
             'biaya_pendidikan'  => $this->input->post('biaya_pendidikan', TRUE),
             'status'            => $this->input->post('status', TRUE),
-            'password'          => $this->input->post('password', TRUE),
+            'password'          => password_hash((string)$nim, PASSWORD_DEFAULT), // Password selalu = NIM
+            'tgl_input'         => date('Y-m-d H:i:s'),
         );
-
-        // Update password hanya jika diisi, dan simpan dalam bentuk hash
-        $password_input = $this->input->post('password', TRUE);
-        if (!empty($password_input)) {
-            $data['password'] = password_hash((string)$password_input, PASSWORD_DEFAULT);
-        }
 
         $this->Mahasiswa_model->update(['nis' => $this->input->post('nis')], $data);
         echo json_encode(["status" => TRUE]);

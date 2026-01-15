@@ -29,6 +29,7 @@
 <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js"></script>
 
 
+
 <script>
 $(document).ready(function(){
     table = $('#tabel_view').DataTable({
@@ -41,15 +42,47 @@ $(document).ready(function(){
             "targets": [ -1 ],
             "orderable": false,
         },
+        {
+            "targets": [ 0 ], // No column
+            "orderable": false,
+            "searchable": false
+        },
     ],
     "paging": true,
     "searching": true,
     "ordering": true,
     "scrollY": false,
+    "orderCellsTop": true, //Gunakan row pertama untuk ordering
+    "fixedHeader": true,
 
     // Tambahkan dom dan buttons di sini:
     dom: 'Bfrtip',
-    buttons: ['copy', 'excel', 'pdf', 'print']
+    buttons: ['copy', 'excel', 'pdf', 'print'],
+    
+    // Initialize column filters
+    initComplete: function () {
+        var api = this.api();
+        
+        // Setup filters di baris kedua thead
+        api.columns().eq(0).each(function (colIdx) {
+            // Ambil cell di baris kedua untuk kolom ini
+            var cell = $('.filters th').eq($(api.column(colIdx).header()).index());
+            
+            // Bind input text
+            $('input', cell).off('keyup change').on('keyup change', function (e) {
+                e.stopPropagation();
+                var curValue = this.value;
+                api.column(colIdx).search(curValue).draw();
+            });
+            
+            // Bind select dropdown
+            $('select', cell).off('change').on('change', function (e) {
+                e.stopPropagation();
+                var val = $(this).val();
+                api.column(colIdx).search(val ? '^' + val + '$' : '', true, false).draw();
+            });
+        });
+    }
 });
 
 });
@@ -146,7 +179,6 @@ function edit_mahasiswa(id) {
             $('[name="email"]').val(data.email);
             $('[name="biaya_pendidikan"]').val(data.biaya_pendidikan);
             $('[name="status"]').val(data.status);
-            $('#password-info').text('Kosongi jika tidak ingin mengubah password');
 
             $('#modal_mahasiswa').modal('show');
             $('.modal-title').text('Edit Data Mahasiswa');
@@ -194,6 +226,24 @@ function reload_table()
 {
     table.ajax.reload(null,false); //reload datatable ajax 
 }
+
+<?php if ($this->session->flashdata('success')): ?>
+  Swal.fire({
+    icon: 'success',
+    title: 'Berhasil!',
+    text: '<?= $this->session->flashdata('success'); ?>',
+    showConfirmButton: false,
+    timer: 2000
+  });
+<?php elseif ($this->session->flashdata('error')): ?>
+  Swal.fire({
+    icon: 'error',
+    title: 'Gagal!',
+    text: '<?= $this->session->flashdata('error'); ?>',
+    showConfirmButton: false,
+    timer: 2500
+  });
+<?php endif; ?>
 </script>
 <!-- Modal Upload -->
 <div class="modal fade" id="modal_import">
@@ -326,15 +376,6 @@ function reload_table()
                           <option value="Cuti">Cuti</option>
                           <option value="Non Aktif">Non Aktif</option>
                         </select>
-                        <div class="invalid-feedback d-block"></div>
-                        </div>
-                    </div>
-
-                    <div class="form-group row mb-3">
-                        <div class="col-sm-3"><h6 class="mb-0">Password </h6></div>
-                        <div class="col-sm-9 text-secondary">
-                        <code id="password-info"></code>
-                        <input type="text" name="password" id="password" class="form-control" />
                         <div class="invalid-feedback d-block"></div>
                         </div>
                     </div>

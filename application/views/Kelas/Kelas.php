@@ -50,6 +50,16 @@
                   <th>Status</th>
                   <th>Aksi</th>
               </tr>
+              <tr class="filters">
+                  <th></th> <!-- No column -->
+                  <th><input type="text" class="form-control form-control-sm" placeholder="Cari Angkatan" /></th>
+                  <th><input type="text" class="form-control form-control-sm" placeholder="Cari Nama Kelas" /></th>
+                  <th><input type="text" class="form-control form-control-sm" placeholder="Cari Semester" /></th>
+                  <th><input type="text" class="form-control form-control-sm" placeholder="Cari Kategori" /></th>
+                  <th><input type="text" class="form-control form-control-sm" placeholder="Cari Jenjang" /></th>
+                  <th><input type="text" class="form-control form-control-sm" placeholder="Cari Status" /></th>
+                  <th></th> <!-- Aksi column -->
+              </tr>
             </thead>
             <tbody>
               

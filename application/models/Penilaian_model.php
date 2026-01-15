@@ -5,7 +5,7 @@ class Penilaian_model extends CI_Model {
 
    var $column_order = array(null,'jenjang','nama_kelas','nama_matakuliah','sks','semester',null);
 	var $column_search = array('jenjang','nama_kelas','nama_matakuliah','sks','semester'); 
-	var $order = array('id_krs' => 'desc'); // default order 
+	var $order = array('krs.id_kelas' => 'desc'); // default order 
 
 	public function __construct()
 	{
@@ -35,7 +35,15 @@ class Penilaian_model extends CI_Model {
         $this->db->join('kelas k', 'k.id_kelas = krs.id_kelas');
         $this->db->join('matakuliah mk', 'mk.id_matakuliah = krs.id_matkul');
         $this->db->join('tahun_akademik t', 't.id_tahun = krs.id_tahun');
-        $this->db->group_by(['krs.id_kelas', 'krs.id_matkul']);
+        $this->db->group_by([
+            'krs.id_kelas', 
+            'krs.id_matkul', 
+            'k.nama_kelas', 
+            'k.semester', 
+            'k.jenjang', 
+            'mk.nama_matakuliah', 
+            't.tahun_akademik'
+        ]);
 		$i = 0;
 		if(isset($_POST['order'])) // here order processing
 		{

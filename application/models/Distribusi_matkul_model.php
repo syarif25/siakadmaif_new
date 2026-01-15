@@ -4,8 +4,8 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 class Distribusi_matkul_model extends CI_Model {
 
     var $table = 'distribusi_mk';
-	var $column_order = array(null,'jenjang','nama_kelas','nama_matakuliah','sks',null);
-	var $column_search = array('jenjang','nama_kelas','nama_matakuliah','sks'); 
+	var $column_order = array(null,'kelas.jenjang','kelas.nama_kelas','matakuliah.nama_matakuliah','matakuliah.sks','dosen.nama_dosen','distribusi_mk.hari',null);
+	var $column_search = array('kelas.jenjang','kelas.nama_kelas','matakuliah.nama_matakuliah','matakuliah.sks','dosen.nama_dosen','distribusi_mk.hari'); 
 	var $order = array('id_distribusi' => 'desc'); // default order 
 
 	public function __construct()

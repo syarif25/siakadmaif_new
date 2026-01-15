@@ -34,6 +34,10 @@
           <!-- <button class="btn btn-warning radius- 30" onclick="add()"><i class="bx bx-user-plus"></i> Tambah Generate KRS</button> -->
           <!-- Modal -->
           
+          <button class="btn btn-danger" id="btn-reset-all">
+              <i class="bx bx-reset"></i> Reset All KRS (Tahun Akademik Aktif)
+          </button>
+          
           <hr />
           <div class="card">
             <div class="card-body">
@@ -51,6 +55,18 @@
                         <th>Total SKS</th>
                         <th>Status KRS</th>
                         <th>Aksi</th>
+                    </tr>
+                    <tr class="filters">
+                        <th></th> <!-- No -->
+                        <th><input type="text" class="form-control form-control-sm" placeholder="Cari Jenjang" /></th>
+                        <th><input type="text" class="form-control form-control-sm" placeholder="Cari Kelas" /></th>
+                        <th><input type="number" class="form-control form-control-sm" placeholder="Semester" /></th>
+                        <th><input type="text" class="form-control form-control-sm" placeholder="Tahun" /></th>
+                        <th><input type="number" class="form-control form-control-sm" placeholder="Jml Mhs" /></th>
+                        <th><input type="number" class="form-control form-control-sm" placeholder="Jml MK" /></th>
+                        <th><input type="number" class="form-control form-control-sm" placeholder="SKS" /></th>
+                        <th></th> <!-- Status -->
+                        <th></th> <!-- Aksi -->
                     </tr>
                   </thead>
                   <tbody>
