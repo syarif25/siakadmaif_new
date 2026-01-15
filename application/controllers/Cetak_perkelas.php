@@ -51,7 +51,7 @@ class Cetak_perkelas extends CI_Controller {
             // Tombol aksi
             $row[] = '
                 <div class="btn-group" role="group">
-                    <a href="'.site_url('Cetak_perkelas/cetak/'.$datanya->id_dosen).'" 
+                    <a href="'.site_url('Cetak_perkelas/cetak/'.$datanya->id_kelas).'" 
                     target="_blank" class="btn btn-sm btn-outline-success">
                         <i class="bx bx-printer"></i> Cetak
                     </a>

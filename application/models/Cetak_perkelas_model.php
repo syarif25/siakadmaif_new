@@ -16,12 +16,12 @@ class Cetak_perkelas_model extends CI_Model {
 
 	function _get_datatables_query()
 	{
-		$this->db->select('*');
+		$this->db->select('kelas.id_kelas, kelas.nama_kelas, kelas.jenjang, kelas.kategori');
 		$this->db->from('distribusi_mk');
 		$this->db->join('tahun_akademik', 'distribusi_mk.id_tahun = tahun_akademik.id_tahun');
         $this->db->join('kelas', 'distribusi_mk.id_kelas = kelas.id_kelas');
         $this->db->where('tahun_akademik.status','Aktif');
-        $this->db->group_by('kelas.id_kelas');
+        $this->db->group_by(array('kelas.id_kelas', 'kelas.nama_kelas', 'kelas.jenjang', 'kelas.kategori'));
 
 		$i = 0;
 		if(isset($_POST['order'])) // here order processing
