@@ -50,7 +50,7 @@ class Rekap_nilai_model extends CI_Model {
         $this->db->join('tahun_akademik', 'tahun_akademik.id_tahun = krs.id_tahun');
         $this->db->where('krs.id_kelas', $id_kelas);
         $this->db->where('tahun_akademik.status', 'Aktif');
-        $this->db->group_by('krs.nis');
+        $this->db->group_by(array('krs.nis', 'mahasiswa.nama_mahasiswa', 'krs.id_kelas', 'tahun_akademik.semester', 'tahun_akademik.tahun_akademik', 'kelas.nama_kelas'));
         return $this->db->get()->result();
     }
 
@@ -61,7 +61,7 @@ class Rekap_nilai_model extends CI_Model {
         $this->db->from('krs');
         $this->db->join('matakuliah', 'matakuliah.id_matakuliah = krs.id_matkul');
         $this->db->where('krs.id_kelas', $id_kelas);
-        $this->db->group_by('krs.id_matkul');
+        $this->db->group_by(array('krs.id_matkul', 'matakuliah.id_matakuliah', 'matakuliah.nama_matakuliah'));
         return $this->db->get()->result();
     }
 
