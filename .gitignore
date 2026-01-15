@@ -30,3 +30,7 @@ node_modules/
 # Environment
 .env
 .DS_Store
+
+# Exclude unused assets
+gak dipakai/
+*.zip
