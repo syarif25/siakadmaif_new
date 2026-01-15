@@ -6,8 +6,8 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: siakad_web
-    ports:
-      - "8081:80"
+    # ports:
+    #   - "8081:80"
     volumes:
       - .:/var/www/html
     environment:
